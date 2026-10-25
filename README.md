@@ -148,7 +148,9 @@ Only ingestion accepts the Bearer token. All reads, manual edits, deletes, expor
 | --- | --- | --- |
 | `POST /api/transactions` | Ingestion Bearer token | Create an expense |
 | `GET /api/transactions` | Owner session | Keyset-paginated history |
-| `PATCH /api/transactions/:id` | Owner session + Origin | Correct amount and/or timestamp |
+| `PATCH /api/transactions/:id` | Owner session + Origin | Edit amount, timestamp, title, or category |
+| `GET /api/categories` | Owner session | List categories and icon keys |
+| `POST /api/categories` | Owner session + Origin | Create a category with a name and icon |
 | `DELETE /api/transactions/:id` | Owner session + Origin | Delete one expense |
 | `POST /api/dashboard/transactions` | Owner session + Origin | Manual entry from the app |
 | `GET /api/stats?month=2026-10` | Owner session | Vietnam-local reports |
@@ -165,7 +167,9 @@ The ingestion body is strictly:
 }
 ```
 
-`amount` must be a positive JSON integer no larger than `9007199254740991`. Extra fields, fractions, numeric strings, missing timezones, and invalid dates are rejected. Timestamps support years 1900–9998. Amounts are stored as PostgreSQL `bigint`; database sums and averages use integer/BigInt arithmetic. JSON **response amounts are decimal strings** so aggregate values never lose precision. Charts alone use normalized numeric display coordinates; tooltips and exact-value tables preserve original amounts.
+`amount` must be a positive JSON integer no larger than `9007199254740991`. The optional `title` field accepts up to 120 characters and defaults to `expense`; optional `categoryId` accepts an existing category UUID or `null` for Uncategorized. Existing Shortcuts can keep sending only amount and timestamp. Unknown fields, fractions, numeric strings, missing timezones, and invalid dates are rejected. Timestamps support years 1900–9998. Amounts are stored as PostgreSQL `bigint`; database sums and averages use integer/BigInt arithmetic. JSON **response amounts are decimal strings** so aggregate values never lose precision. Charts alone use normalized numeric display coordinates; tooltips and exact-value tables preserve original amounts.
+
+The expense dialog formats VND digits as you type (for example `100.000`), shows `0` when cleared, and removes leading zeroes. It opens without focusing an input. Titles and categories appear in the preview, transaction lists, and CSV export. Use **New category** in the expense dialog to create a category with a name and icon. The migration seeds Food, Friend, Love, Shopping, Gas, Transport, Bills, Coffee, Health, Entertainment, Education, and Other. Existing expenses keep their amounts and dates and become `expense` / Uncategorized. Dashboard category totals cover the current month; transaction filters accept `categoryId` or `uncategorized`.
 
 New creation returns `201 { data: Transaction, replayed: false }`. An optional `Idempotency-Key` header (1–128 printable non-space ASCII characters) serializes retries in a database transaction using an advisory lock. Same key + same normalized payload returns `200` and the original response. Reusing a key with different data returns `409`. No key means every request is a separate transaction, even with an identical amount and timestamp. Keys are global to this single owner and remain valid across token rotations.
 
@@ -187,7 +191,9 @@ Run `npm run assets` after editing the vector icon source generator. Startup ima
 
 ## Verification and physical iPhone checklist
 
-Completed: production build, TypeScript checking, 32 automated tests covering actual migrated PostgreSQL behavior through PGlite, strict payload rejection, UTC/Vietnam boundaries, month totals, integer safety, idempotency, updates/deletes, pagination, empty states, session/password handling, CSRF, and rate limiting. The preview server started successfully. Browser/mobile visual verification and physical-device installation were not completed; detailed testing was stopped at the owner's request.
+Completed: production build, TypeScript checking, and 39 automated tests covering migrated PostgreSQL behavior, categories, titles, legacy Shortcut retries, exact totals, authentication, and rate limits. A focused Chromium browser check covered creating/editing expenses and categories, formatted amounts, no input autofocus, filter layouts at 320/375/440px, the bottom navigation on short pages, and route scroll reset. The Apple touch icon artwork is centered to the pixel. Physical iPhone installation and Safari behavior still need a check on the device.
+
+Refresh is in the top bar beside Personal workspace. Add expense is a circular floating button above the mobile navigation. The monthly expense card includes last month's total and the percentage change. If an installed iPhone Home Screen icon still shows the old artwork, remove that shortcut and add Moni to the Home Screen again using Safari; expenses remain in Neon.
 
 After deployment, do this short physical-device check:
 

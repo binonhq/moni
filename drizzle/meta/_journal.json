@@ -8,6 +8,13 @@
       "when": 1792940761912,
       "tag": "0000_kind_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792944206036,
+      "tag": "0001_wakeful_red_hulk",
+      "breakpoints": true
     }
   ]
 }

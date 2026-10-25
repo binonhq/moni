@@ -1,4 +1,6 @@
-export type Transaction = { id: string; amount: string; timestamp: string; createdAt: string; updatedAt: string };
+export type Category = { id: string; name: string; icon: string };
+export type CategoryTotal = { category: Category | null; amount: string; count: number };
+export type Transaction = { id: string; amount: string; title: string; categoryId: string | null; category: Category | null; timestamp: string; createdAt: string; updatedAt: string };
 export type TransactionPage = { data: Transaction[]; nextCursor: string | null };
 export type DayTotal = { date: string; amount: string; count: number };
 export type Stats = {
@@ -6,5 +8,6 @@ export type Stats = {
   year: string; allTime: string; allTimeCount: number; previousMonth: string; previousMonthToDate: string;
   averageDaily: string; averageTransaction: string; activeDays: number; elapsedDays: number;
   daily: DayTotal[]; monthly: { month: string; amount: string; count: number }[];
+  byCategory: CategoryTotal[];
   highestDay: DayTotal | null; largestTransaction: Transaction | null;
 };

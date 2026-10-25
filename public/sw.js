@@ -1,6 +1,6 @@
 /* Only public shell files and content-hashed Next assets enter this cache. */
-const VERSION = "moni-shell-v1";
-const SHELL = ["/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png", "/icons/maskable-512.png"];
+const VERSION = "moni-shell-v2";
+const SHELL = ["/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon-v2.png", "/icons/maskable-512.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL)));
   // An update waits until the user accepts it or all old windows close.

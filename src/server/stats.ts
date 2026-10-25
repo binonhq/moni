@@ -1,6 +1,6 @@
-import { and, desc, gte, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import type { Database } from "@/db";
-import { transactions as t } from "@/db/schema";
+import { transactions as t, categories } from "@/db/schema";
 import { addDays, dayStart, localDay, localMonth, monthBounds, shiftMonth, weekStart } from "@/lib/dates";
 import type { DayTotal, Stats } from "@/lib/types";
 import { serialize } from "./transactions";
@@ -39,12 +39,16 @@ export async function getStats(db: Database, month: string, now = new Date()): P
       .from(t).where(and(gte(t.timestamp, monthBounds(shiftMonth(month, -11)).start), lt(t.timestamp, end))).groupBy(monthExpression).orderBy(monthExpression);
     const monthlyMap = new Map(monthlyRows.map(m => [m.month, m]));
     const monthly = Array.from({ length: 12 }, (_, i) => { const m = shiftMonth(month, i - 11); return monthlyMap.get(m) ?? { month: m, amount: "0", count: 0 }; });
-    const [largest] = await tx.select().from(t).where(and(gte(t.timestamp, start), lt(t.timestamp, end))).orderBy(desc(t.amount), desc(t.timestamp), desc(t.id)).limit(1);
+    const categoryRows = await tx.select({ id: categories.id, name: categories.name, icon: categories.icon, amount: sql<string>`sum(${t.amount})::text`, count: sql<number>`count(*)::int` })
+      .from(t).leftJoin(categories, eq(t.categoryId, categories.id)).where(and(gte(t.timestamp, start), lt(t.timestamp, end)))
+      .groupBy(categories.id, categories.name, categories.icon).orderBy(sql`sum(${t.amount}) DESC`, categories.name);
+    const byCategory = categoryRows.map(row => ({ category: row.id ? { id: row.id, name: row.name!, icon: row.icon! } : null, amount: row.amount, count: row.count }));
+    const [largest] = await tx.select({ transaction: t, category: categories }).from(t).leftJoin(categories, eq(t.categoryId, categories.id)).where(and(gte(t.timestamp, start), lt(t.timestamp, end))).orderBy(desc(t.amount), desc(t.timestamp), desc(t.id)).limit(1);
     const highestDay = grouped.reduce<DayTotal | null>((highest, d) => !highest || BigInt(d.amount) > BigInt(highest.amount) ? d : highest, null);
-    return { ...totals, month, asOf: now.toISOString(), elapsedDays, daily, monthly, highestDay, activeDays: grouped.length,
+    return { ...totals, month, asOf: now.toISOString(), elapsedDays, daily, monthly, byCategory, highestDay, activeDays: grouped.length,
       averageDaily: elapsedDays ? (BigInt(totals.total) / BigInt(elapsedDays)).toString() : "0",
       averageTransaction: totals.count ? (BigInt(totals.total) / BigInt(totals.count)).toString() : "0",
-      largestTransaction: largest ? serialize(largest) : null,
+      largestTransaction: largest ? serialize(largest.transaction, largest.category) : null,
     };
   }, { isolationLevel: "repeatable read", accessMode: "read only" });
 }

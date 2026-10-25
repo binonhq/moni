@@ -11,7 +11,7 @@ beforeAll(async () => { test = await testDatabase(); });
 afterAll(async () => { await test.client.close(); });
 beforeEach(async () => { await test.db.execute(sql`TRUNCATE transactions, idempotency`); });
 describe("strict transaction contract", () => {
-  it("accepts only amount and a timezone-bearing timestamp", () => { expect(transactionSchema.parse(payload)).toEqual(payload); });
+  it("accepts the original amount and timezone-bearing timestamp payload", () => { expect(transactionSchema.parse(payload)).toEqual(payload); });
   it.each([0, -1, 1.1, "1000", Number.MAX_SAFE_INTEGER + 1, null, true])("rejects invalid amount %s", amount => { expect(transactionSchema.safeParse({ ...payload, amount }).success).toBe(false); });
   it.each(["2026-10-25T20:50:00", "2026-02-30T00:00:00Z", "not-a-date", "2026-13-01T00:00:00Z"])("rejects invalid date %s", timestamp => { expect(transactionSchema.safeParse({ ...payload, timestamp }).success).toBe(false); });
   it("rejects extra fields and empty updates", () => { expect(transactionSchema.safeParse({ ...payload, merchant: "Coffee" }).success).toBe(false); expect(updateSchema.safeParse({}).success).toBe(false); });
