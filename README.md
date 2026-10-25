@@ -28,7 +28,7 @@ In the Vercel dashboard:
 
 1. Open the Moni project → **Storage** → **Create Database** / **Connect Store**.
 2. Choose **Neon (Postgres)** from the Marketplace.
-3. Create one database/project, preferably in Singapore to match the app's `sin1` function region. If Singapore is unavailable on your plan, use the nearest supported region and update `vercel.json` to match.
+3. Create one database/project in the same region as the Moni Vercel Function. For example, a Neon `us-east-1` database pairs with Vercel Washington, D.C. (`iad1`). This project is configured for `iad1`; if you move Neon to another region, update `vercel.json` to match.
 4. Connect its **main branch** to this Vercel project for **Production** only. Leave automatic preview database branching disabled if offered. You do not need a second branch or development database.
 5. Verify the integration added `DATABASE_URL` to Production environment variables. It should be the pooled PostgreSQL URL. If the integration uses a prefixed name, add `DATABASE_URL` with that value.
 6. `DATABASE_URL_UNPOOLED` is optional. If present, it is the direct connection to the **same database**, used for migrations. It is not another database.
