@@ -6,8 +6,10 @@ export const timestampSchema = z.iso.datetime({ offset: true }).refine(v => {
   return Number.isFinite(date.getTime()) && date.getUTCFullYear() >= 1900 && date.getUTCFullYear() <= 9998;
 }, "Use a valid date between 1900 and 9998 with a timezone.");
 export const transactionSchema = z.object({
-  amount: z.union([z.string(), z.number()])
-    .pipe(z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER)),
+  amount: z.coerce.number<string | number>()
+  .int()
+  .positive()
+  .max(Number.MAX_SAFE_INTEGER),
   timestamp: timestampSchema,
   title: z.string().trim().max(120).transform(formatExpenseTitle).optional(), categoryId: z.uuid().nullable().optional(),
 }).strict();
