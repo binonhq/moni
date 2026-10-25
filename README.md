@@ -8,7 +8,7 @@ Use **one Neon PostgreSQL database created through Vercel Storage / Marketplace*
 
 ### 1. Create the Vercel project
 
-Use Node.js 22.13+ (22.x recommended) and npm. This checkout includes a project-local Node 22 runtime in `node_modules/node/bin` because the original Windows system runtime was Node 20.12.2. For normal terminal commands, install Node 22 LTS and reopen PowerShell, or invoke that project-local runtime explicitly.
+Use Node.js 22.x and npm. This checkout includes a project-local Node 22 runtime in `node_modules/node/bin` because the original Windows system runtime was Node 20.12.2. For normal terminal commands, install Node 22 LTS and reopen PowerShell, or invoke that project-local runtime explicitly. Vercel is pinned to Node 22.x as well.
 
 From the `moni` project folder:
 
@@ -56,7 +56,7 @@ Paste the result into `BETTER_AUTH_SECRET`. Do not add `NEXT_PUBLIC_` to any of 
 
 ### 4. Apply migrations and create your owner account
 
-Pull the Production environment into the git-ignored local file, then initialize that **same hosted database**:
+Pull the Production environment into the git-ignored local file, set its `BETTER_AUTH_URL` to `http://localhost:3000`, then initialize that **same hosted database**:
 
 ```powershell
 npx vercel@latest env pull .env.local --environment=production
@@ -64,9 +64,20 @@ npm run db:migrate
 npm run setup:user
 ```
 
+Local and Production intentionally use the same Neon database. Keep `DATABASE_URL` and `DATABASE_URL_UNPOOLED` as pulled; only change the local `BETTER_AUTH_URL` to `http://localhost:3000` so local sign-in uses the local origin.
+
 The account command prompts for an email and a password of at least 16 characters. The password input is masked. Signup is disabled in the deployed app; a database uniqueness constraint also prevents a second owner. Do not put `MONI_SETUP_PASSWORD` in Vercel. The optional setup variables in `.env.example` are for unattended trusted local setup only.
 
 The `.env.local` file contains real secrets. It is excluded from Git and Vercel uploads. Do not share it. If Vercel does not allow a sensitive variable to be pulled, enter its original value into `.env.local` yourself, without changing the production value.
+
+To run the local app in the same optimized production mode, use Node 22.x and run:
+
+```powershell
+npm run build
+npm start
+```
+
+Then open `http://localhost:3000`. Use `npm run dev` only when you want Next.js development mode.
 
 ### 5. Deploy and connect the iPhone
 
