@@ -31,7 +31,7 @@ export const categories = pgTable("categories", {
 }, t => [uniqueIndex("categories_name_unique").on(sql`lower(${t.name})`), check("category_name_length", sql`length(trim(${t.name})) BETWEEN 1 AND 40`)]);
 export const transactions = pgTable("transactions", {
   id: uuid("id").primaryKey().defaultRandom(), amount: bigint("amount", { mode: "bigint" }).notNull(),
-  title: text("title").notNull().default("expense"), categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+  title: text("title").notNull().default("Expense"), categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
   timestamp: instant("timestamp").notNull(), createdAt: instant("created_at").notNull().defaultNow(), updatedAt: instant("updated_at").notNull().defaultNow(),
 }, t => [index("transactions_timestamp_id_idx").on(t.timestamp.desc(), t.id.desc()), index("transactions_category_timestamp_idx").on(t.categoryId, t.timestamp), check("transaction_title_length", sql`length(trim(${t.title})) BETWEEN 1 AND 120`), check("amount_positive_safe", sql`${t.amount} > 0 AND ${t.amount} <= 9007199254740991`)]);
 export const idempotency = pgTable("idempotency", {

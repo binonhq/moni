@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { categoryIcons } from "./categories";
+import { formatExpenseTitle } from "./title";
 export const timestampSchema = z.iso.datetime({ offset: true }).refine(v => {
   const date = new Date(v);
   return Number.isFinite(date.getTime()) && date.getUTCFullYear() >= 1900 && date.getUTCFullYear() <= 9998;
 }, "Use a valid date between 1900 and 9998 with a timezone.");
 export const transactionSchema = z.object({
   amount: z.number().int().positive().max(Number.MAX_SAFE_INTEGER), timestamp: timestampSchema,
-  title: z.string().trim().max(120).transform(v => v || "expense").optional(), categoryId: z.uuid().nullable().optional(),
+  title: z.string().trim().max(120).transform(formatExpenseTitle).optional(), categoryId: z.uuid().nullable().optional(),
 }).strict();
 export const updateSchema = transactionSchema.partial().refine(v => Object.keys(v).length > 0, "Provide an expense field to update.");
 export const categorySchema = z.object({ name: z.string().trim().min(1).max(40), icon: z.enum(categoryIcons).default("tag") }).strict();

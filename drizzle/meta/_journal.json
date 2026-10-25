@@ -15,6 +15,13 @@
       "when": 1792944206036,
       "tag": "0001_wakeful_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792945836541,
+      "tag": "0002_careless_excalibur",
+      "breakpoints": true
     }
   ]
 }

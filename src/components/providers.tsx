@@ -1,7 +1,6 @@
 "use client";
 import { ThemeProvider } from "next-themes";
 import { MotionConfig } from "motion/react";
-import { Toaster } from "sonner";
 import { createContext, useContext, useEffect, useState } from "react";
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 type Device = { online: boolean; standalone: boolean; iosSafari: boolean; install: InstallEvent | null };
@@ -34,6 +33,5 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
   return <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange><MotionConfig reducedMotion="user"><DeviceContext.Provider value={device}>
     {children}{update && <div className="update-banner" role="status"><span>A fresh version of Moni is ready.</span><button onClick={applyUpdate}>Update & reload</button></div>}
-    <Toaster position="top-center" richColors closeButton />
   </DeviceContext.Provider></MotionConfig></ThemeProvider>;
 }

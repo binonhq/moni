@@ -8,25 +8,31 @@ import { timestampSchema } from "@/lib/validation";
 import { ApiError } from "./errors";
 import { digest } from "./security";
 import { findCategory } from "./categories";
+import { formatExpenseTitle } from "@/lib/title";
 
 export function serialize(row: typeof transactions.$inferSelect, category: Category | null = null): Transaction {
-  return { id: row.id, amount: row.amount.toString(), title: row.title, categoryId: row.categoryId, category: category ? { id: category.id, name: category.name, icon: category.icon } : null, timestamp: row.timestamp.toISOString(), createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
+  return { id: row.id, amount: row.amount.toString(), title: formatExpenseTitle(row.title), categoryId: row.categoryId, category: category ? { id: category.id, name: category.name, icon: category.icon } : null, timestamp: row.timestamp.toISOString(), createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 export async function createTransaction(db: Database, input: TransactionInput, key?: string | null) {
   if (key && !/^[\x21-\x7e]{1,128}$/.test(key)) throw new ApiError(400, "INVALID_IDEMPOTENCY_KEY", "Use 1–128 printable characters for Idempotency-Key.");
   if (key === "") throw new ApiError(400, "INVALID_IDEMPOTENCY_KEY", "Idempotency-Key must not be empty.");
-  const title = input.title?.trim() || "expense"; const categoryId = input.categoryId ?? null;
+  const title = formatExpenseTitle(input.title); const categoryId = input.categoryId ?? null;
   // Preserve fingerprints for existing Shortcut requests that only contain amount/time.
   const base = `${input.amount}:${new Date(input.timestamp).toISOString()}`;
-  const fingerprint = digest(title === "expense" && categoryId === null ? base : `${base}:${JSON.stringify([title, categoryId])}`);
+  const fingerprint = digest(title === "Expense" && categoryId === null ? base : `${base}:${JSON.stringify([title, categoryId])}`);
   return db.transaction(async tx => {
     if (key) {
       // Transaction-scoped lock serializes concurrent requests for this key across instances.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
       const [prior] = await tx.select().from(idempotency).where(eq(idempotency.key, key));
       if (prior) {
-        if (prior.fingerprint !== fingerprint) throw new ApiError(409, "IDEMPOTENCY_CONFLICT", "This key was already used with different transaction data.");
-        return { data: { ...prior.response, title: prior.response.title ?? "expense", categoryId: prior.response.categoryId ?? null, category: prior.response.category ?? null }, replayed: true };
+        const priorData = prior.response;
+        const compatibleLegacyPayload = priorData.amount === String(input.amount)
+          && new Date(priorData.timestamp).toISOString() === new Date(input.timestamp).toISOString()
+          && formatExpenseTitle(priorData.title) === title
+          && (priorData.categoryId ?? null) === categoryId;
+        if (prior.fingerprint !== fingerprint && !compatibleLegacyPayload) throw new ApiError(409, "IDEMPOTENCY_CONFLICT", "This key was already used with different transaction data.");
+        return { data: { ...prior.response, title: formatExpenseTitle(prior.response.title), categoryId: prior.response.categoryId ?? null, category: prior.response.category ?? null }, replayed: true };
       }
     }
     const category = await findCategory(tx, categoryId);
@@ -64,7 +70,7 @@ export async function updateTransaction(db: Database, id: string, input: Partial
   if (input.categoryId) await findCategory(tx, input.categoryId);
   const [row] = await tx.update(transactions).set({
     ...(input.amount !== undefined ? { amount: BigInt(input.amount) } : {}),
-    ...(input.title !== undefined ? { title: input.title.trim() || "expense" } : {}),
+    ...(input.title !== undefined ? { title: formatExpenseTitle(input.title) } : {}),
     ...(input.categoryId !== undefined ? { categoryId: input.categoryId } : {}),
     ...(input.timestamp ? { timestamp: new Date(input.timestamp) } : {}), updatedAt: new Date(),
   }).where(eq(transactions.id, id)).returning();

@@ -16,7 +16,7 @@ Pass notification text to the available Apple Intelligence model action. Ask it 
    - `Authorization`: `Bearer YOUR_TOKEN`
    - `Content-Type`: `application/json`
    - Optional `Idempotency-Key`: a UUID created once for this notification.
-4. Set request body to **JSON**. Add `amount` (Number) and `timestamp` (Text). You can optionally add `title` (Text, up to 120 characters) and `categoryId` (an existing category UUID). Omit them to use `expense` and Uncategorized.
+4. Set request body to **JSON**. Add `amount` (Number) and `timestamp` (Text). You can optionally add `title` (Text, up to 120 characters) and `categoryId` (an existing category UUID). Titles are capitalized automatically. Omit them to use `Expense` and Uncategorized.
 5. Insert the actual extracted **Magic Variables** in the value fields. Do not type a variable's name as literal text.
 
 ```json

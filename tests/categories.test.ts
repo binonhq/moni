@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { sql } from "drizzle-orm";
 import { testDatabase } from "./helpers";
-import { createCategory, listCategories } from "@/server/categories";
+import { createCategory, deleteCategory, listCategories } from "@/server/categories";
 import { createTransaction, listTransactions, updateTransaction } from "@/server/transactions";
 import { getStats } from "@/server/stats";
 import { digest } from "@/server/security";
@@ -26,8 +26,9 @@ describe("expense categories and titles", () => {
   });
   it("keeps old ingestion payloads valid and defaults blank titles", async () => {
     const created = await createTransaction(test.db, payload);
-    expect(created.data).toMatchObject({ title: "expense", categoryId: null, category: null });
-    expect(transactionSchema.parse({ ...payload, title: " " }).title).toBe("expense");
+    expect(created.data).toMatchObject({ title: "Expense", categoryId: null, category: null });
+    expect(transactionSchema.parse({ ...payload, title: " " }).title).toBe("Expense");
+    expect(transactionSchema.parse({ ...payload, title: "lunch with friends" }).title).toBe("Lunch With Friends");
     expect(transactionSchema.safeParse({ ...payload, title: "x".repeat(121) }).success).toBe(false);
   });
   it("stores, previews, filters, changes and clears a category without losing the title", async () => {
@@ -41,6 +42,14 @@ describe("expense categories and titles", () => {
     expect(updated).toMatchObject({ title: "Lunch", category: null, categoryId: null });
     expect((await listTransactions(test.db, { limit: 30, categoryId: "uncategorized" })).data).toHaveLength(1);
     await expect(createTransaction(test.db, { ...payload, categoryId: "00000000-0000-4000-8000-000000000001" })).rejects.toMatchObject({ status: 400 });
+  });
+  it("removes a category and leaves its expenses Uncategorized", async () => {
+    const category = await createCategory(test.db, { name: "Temporary", icon: "tag" });
+    const created = await createTransaction(test.db, { ...payload, title: "temporary expense", categoryId: category.id });
+    await deleteCategory(test.db, category.id);
+    const [expense] = (await listTransactions(test.db, { limit: 30, categoryId: "uncategorized" })).data;
+    expect(expense).toMatchObject({ id: created.data.id, title: "Temporary Expense", categoryId: null, category: null });
+    await expect(deleteCategory(test.db, category.id)).rejects.toMatchObject({ status: 404 });
   });
   it("counts all categories within the selected month using exact integer totals", async () => {
     const food = (await listCategories(test.db)).find(c => c.name === "Food")!;
@@ -61,8 +70,15 @@ describe("expense categories and titles", () => {
     const old = { id: "00000000-0000-4000-8000-000000000002", amount: "100000", timestamp: new Date(payload.timestamp).toISOString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     await test.db.insert(idempotency).values({ key: "old-retry", fingerprint: digest(`${payload.amount}:${old.timestamp}`), response: old as typeof idempotency.$inferInsert.response });
     const replay = await createTransaction(test.db, payload, "old-retry");
-    expect(replay).toMatchObject({ replayed: true, data: { id: old.id, title: "expense", category: null } });
+    expect(replay).toMatchObject({ replayed: true, data: { id: old.id, title: "Expense", category: null } });
     expect((await listTransactions(test.db, { limit: 30 })).data).toHaveLength(1);
+  });
+  it("replays keyed titles created before automatic capitalization", async () => {
+    const timestamp = new Date(payload.timestamp).toISOString();
+    const old = { id: "00000000-0000-4000-8000-000000000003", amount: "100000", title: "lunch with friends", categoryId: null, category: null, timestamp, createdAt: timestamp, updatedAt: timestamp };
+    await test.db.insert(idempotency).values({ key: "old-title-case", fingerprint: digest(`${payload.amount}:${timestamp}:${JSON.stringify([old.title, null])}`), response: old });
+    const replay = await createTransaction(test.db, { ...payload, title: "lunch with friends" }, "old-title-case");
+    expect(replay).toMatchObject({ replayed: true, data: { title: "Lunch With Friends" } });
   });
 });
 describe("formatted amount input and exports", () => {

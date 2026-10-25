@@ -27,7 +27,7 @@ if (!process.argv.includes("--empty")) {
   const amounts = [65000, 125000, 450000, 35000, 280000, 1500000, 89000, 120000, 75000, 980000, 60000, 340000, 1200000, 55000, 215000, 750000, 125000, 1000000];
   for (const [i, amount] of amounts.entries()) {
     const day = Math.max(1, today - Math.floor((amounts.length - i - 1) * 1.3));
-    await db.insert(transactions).values({ amount: BigInt(amount), title: i % 2 ? "expense" : "Lunch with friends", categoryId: categoryList[i % categoryList.length].id, timestamp: new Date(`${month}-${String(day).padStart(2, "0")}T${String(8 + i % 13).padStart(2, "0")}:15:00+07:00`) });
+    await db.insert(transactions).values({ amount: BigInt(amount), title: i % 2 ? "Expense" : "Lunch With Friends", categoryId: categoryList[i % categoryList.length].id, timestamp: new Date(`${month}-${String(day).padStart(2, "0")}T${String(8 + i % 13).padStart(2, "0")}:15:00+07:00`) });
   }
 }
 // A disposable test token only; it never belongs to a deployed account.
