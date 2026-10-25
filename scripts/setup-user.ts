@@ -8,7 +8,7 @@ try {
   const existing = await db.select({ id: user.id }).from(user).limit(1);
   if (existing.length) throw new Error("OWNER_EXISTS");
   const email = z.email().parse(process.env.MONI_SETUP_EMAIL || await input({ message: "Owner email:" }));
-  const pass = z.string().min(16).max(128).parse(process.env.MONI_SETUP_PASSWORD || await password({ message: "Owner password (16+ characters):", mask: true }));
+  const pass = z.string().min(13).max(128).parse(process.env.MONI_SETUP_PASSWORD || await password({ message: "Owner password (13+ characters):", mask: true }));
   const auth = createAuth(db, true);
   await auth.api.signUpEmail({ body: { name: "Owner", email, password: pass } });
   await db.delete(session);

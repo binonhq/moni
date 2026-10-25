@@ -11,7 +11,7 @@ export function createAuth(db: Database, bootstrap = false) {
   return betterAuth({
     appName: "Moni", baseURL, secret, trustedOrigins: [new URL(baseURL).origin],
     database: drizzleAdapter(db, { provider: "pg", schema }),
-    emailAndPassword: { enabled: true, disableSignUp: !bootstrap, minPasswordLength: 16, maxPasswordLength: 128, autoSignIn: false },
+    emailAndPassword: { enabled: true, disableSignUp: !bootstrap, minPasswordLength: 13, maxPasswordLength: 128, autoSignIn: false },
     session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24, cookieCache: { enabled: false } },
     advanced: { useSecureCookies: baseURL.startsWith("https://"), defaultCookieAttributes: { httpOnly: true, sameSite: "lax", path: "/" } },
     // Atomic PostgreSQL rate limiting is applied before every exposed auth handler.

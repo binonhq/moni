@@ -66,7 +66,7 @@ npm run setup:user
 
 Local and Production intentionally use the same Neon database. Keep `DATABASE_URL` and `DATABASE_URL_UNPOOLED` as pulled; only change the local `BETTER_AUTH_URL` to `http://localhost:3000` so local sign-in uses the local origin.
 
-The account command prompts for an email and a password of at least 16 characters. The password input is masked. Signup is disabled in the deployed app; a database uniqueness constraint also prevents a second owner. Do not put `MONI_SETUP_PASSWORD` in Vercel. The optional setup variables in `.env.example` are for unattended trusted local setup only.
+The account command prompts for an email and a password of at least 13 characters. The password input is masked. Signup is disabled in the deployed app; a database uniqueness constraint also prevents a second owner. Do not put `MONI_SETUP_PASSWORD` in Vercel. The optional setup variables in `.env.example` are for unattended trusted local setup only.
 
 The `.env.local` file contains real secrets. It is excluded from Git and Vercel uploads. Do not share it. If Vercel does not allow a sensitive variable to be pulled, enter its original value into `.env.local` yourself, without changing the production value.
 
