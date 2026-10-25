@@ -12,11 +12,11 @@ import { Button } from "./ui/button";
 import { refreshData, useRefreshing } from "@/hooks/use-resource";
 const tabs = [{ href: "/", label: "Home", icon: House }, { href: "/transactions", label: "Transactions", icon: ArrowLeftRight }, { href: "/insights", label: "Insights", icon: ChartNoAxesCombined }, { href: "/settings", label: "Settings", icon: Settings2 }];
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const path = usePathname(); const { online } = useDevice();
+  const path = usePathname(); const { online, standalone, iosSafari } = useDevice();
   const refreshing = useRefreshing();
   const scrollArea = useRef<HTMLElement>(null);
   useEffect(() => { scrollArea.current?.scrollTo({ top: 0, behavior: "instant" }); }, [path]);
-  return <div className="app-shell"><a href="#main" className="skip-link">Skip to content</a>
+  return <div className={cn("app-shell", standalone && iosSafari && "ios-standalone")}><a href="#main" className="skip-link">Skip to content</a>
     <aside className="sidebar"><Link href="/" aria-label="Moni home"><Brand /></Link><div className="sidebar-caption">YOUR PERSONAL FINANCES</div><nav aria-label="Main navigation">{tabs.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={cn("desktop-nav-item", path === href && "active")} aria-current={path === href ? "page" : undefined}><Icon size={20} strokeWidth={1.8} />{label}{path === href && <span className="nav-dot" />}</Link>)}</nav>
       <div className="sidebar-bottom"><Link href="/guide" className="shortcut-tip"><span className="tip-symbol">↗</span><strong>A little less manual.</strong><span>Let your iPhone log expenses.</span><span className="tip-link">Connect Shortcuts <ArrowUpRight size={15} /></span></Link><div className="privacy-label"><ShieldCheck size={15} /> Just you. Always private.</div></div>
     </aside>
