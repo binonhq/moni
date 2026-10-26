@@ -2,6 +2,7 @@
 import { ThemeProvider } from "next-themes";
 import { MotionConfig } from "motion/react";
 import { createContext, useContext, useEffect, useState } from "react";
+import { MobileSplash } from "./mobile-splash";
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
@@ -88,6 +89,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <MotionConfig reducedMotion="user">
         <DeviceContext.Provider value={device}>
+          <MobileSplash />
           {children}
           {update && (
             <div className="update-banner" role="status">
