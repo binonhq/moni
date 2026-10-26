@@ -18,6 +18,10 @@ import {
   PlusSquare,
   CheckCircle2,
   Trash2,
+  Copy,
+  Check,
+  RotateCw,
+  LockKeyhole,
 } from "lucide-react";
 import { api, refreshData, useResource } from "@/hooks/use-resource";
 import { displayDate } from "@/lib/dates";
@@ -43,6 +47,7 @@ export function SettingsScreen() {
   const [categoryToRemove, setCategoryToRemove] = useState<Category | null>(null);
   const [categoryBusy, setCategoryBusy] = useState(false);
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
+  const [copiedToken, setCopiedToken] = useState(false);
   const [generating, setGenerating] = useState(false);
   async function revokeToken() {
     setBusy(true);
@@ -64,12 +69,19 @@ export function SettingsScreen() {
     try {
       const result = await api<{ data: { token: string } }>("/api/integration", { method: "POST" });
       setGeneratedToken(result.data.token);
+      setCopiedToken(false);
       await integration.refresh();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "Could not generate token.");
     } finally {
       setGenerating(false);
     }
+  }
+  async function copyToken() {
+    if (!generatedToken) return;
+    await navigator.clipboard.writeText(generatedToken);
+    setCopiedToken(true);
+    window.setTimeout(() => setCopiedToken(false), 2200);
   }
   async function exportCsv() {
     setExporting(true);
@@ -355,34 +367,41 @@ export function SettingsScreen() {
             </div>
             <details className="token-guide">
               <summary>
-                <KeyRound size={16} />
-                Manage API access
+                <LockKeyhole size={16} />
+                <span>Manage API access</span>
+                <ChevronRight size={15} className="token-summary-chevron" />
               </summary>
-              <p>Generate a token for this account. It is shown once, so copy it into your Shortcut immediately.</p>
-              <Button variant="secondary" onClick={() => void generateToken()} disabled={!online || generating}>
-                <KeyRound size={17} />
-                {generating ? "Generating…" : integration.data?.data.active ? "Rotate token" : "Generate token"}
-              </Button>
+              <div className="token-guide-copy">
+                <strong>Connect your shortcuts securely.</strong>
+                <p>Generate a private token for this account, then paste it into your Shortcut’s Authorization header.</p>
+              </div>
+              <div className="token-actions">
+                <Button variant="secondary" onClick={() => void generateToken()} disabled={!online || generating}>
+                  {integration.data?.data.active ? <RotateCw size={17} /> : <KeyRound size={17} />}
+                  {generating ? "Generating…" : integration.data?.data.active ? "Rotate token" : "Generate token"}
+                </Button>
+                {integration.data?.data.active && (
+                  <Button variant="ghost" onClick={() => setRevoke(true)} disabled={!online || busy}>
+                    Revoke
+                  </Button>
+                )}
+              </div>
               {generatedToken && (
-                <div className="token-generated" role="status">
-                  <strong>Copy this token now</strong>
-                  <code>{generatedToken}</code>
-                  <p className="small">For your security, Moni will not show it again.</p>
+                <div className="token-generated" role="status" aria-live="polite">
+                  <div className="token-generated-heading">
+                    <span className="token-generated-icon"><Check size={15} /></span>
+                    <div><strong>Token ready</strong><span>Shown once for your security</span></div>
+                  </div>
+                  <div className="token-value-row">
+                    <code>{generatedToken}</code>
+                    <Button variant="ghost" size="icon" onClick={() => void copyToken()} aria-label="Copy API token" title="Copy token">
+                      {copiedToken ? <Check size={17} /> : <Copy size={17} />}
+                    </Button>
+                  </div>
+                  <p className="small">Copy it now. Rotating or leaving this page will not show this token again.</p>
                 </div>
               )}
-              <p>
-                Paste it into your Shortcut’s Authorization header. Rotation immediately replaces
-                the old token. Keep it private: it grants permission to add expenses for this account.
-              </p>
-              {integration.data?.data.active && (
-                <Button
-                  variant="destructive"
-                  onClick={() => setRevoke(true)}
-                  disabled={!online || busy}
-                >
-                  Revoke current token
-                </Button>
-              )}
+              <p className="token-security-note"><LockKeyhole size={14} /> Tokens can add expenses to this account. Keep them private.</p>
             </details>
           </section>
           {!standalone && (

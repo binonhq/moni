@@ -1618,6 +1618,8 @@ th:last-child {
   margin-top: 15px;
   font-size: 11px;
   color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
 }
 .token-guide summary {
   cursor: pointer;
@@ -1625,6 +1627,20 @@ th:last-child {
   display: flex;
   align-items: center;
   gap: 7px;
+  color: var(--ink);
+  font-weight: 600;
+  list-style: none;
+}
+.token-guide summary::-webkit-details-marker {
+  display: none;
+}
+.token-summary-chevron {
+  margin-left: auto;
+  transition: transform 0.2s var(--ease-out);
+  color: var(--muted);
+}
+.token-guide[open] .token-summary-chevron {
+  transform: rotate(90deg);
 }
 .token-guide p {
   margin: 5px 0 12px;
@@ -1634,6 +1650,94 @@ th:last-child {
   color: var(--ink);
   font-size: 11px;
   overflow-wrap: anywhere;
+}
+.token-guide-copy {
+  padding: 9px 0 5px;
+}
+.token-guide-copy strong {
+  display: block;
+  color: var(--ink);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.token-guide-copy p {
+  margin-bottom: 13px;
+}
+.token-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.token-actions .button-ghost {
+  color: var(--muted);
+}
+.token-generated {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent-soft), var(--surface));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.token-generated-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+.token-generated-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--surface);
+  background: var(--accent);
+}
+.token-generated-heading div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.token-generated-heading strong {
+  color: var(--ink);
+  font-size: 11px;
+}
+.token-generated-heading span:not(.token-generated-icon) {
+  font-size: 9px;
+  color: var(--muted);
+}
+.token-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 9px 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.token-value-row code {
+  min-width: 0;
+  flex: 1;
+  font-size: 10px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.token-value-row .button {
+  flex-shrink: 0;
+}
+.token-generated .small {
+  margin: 9px 0 0;
+  line-height: 1.55;
+}
+.token-security-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 15px !important;
+  color: var(--muted);
+  font-size: 10px;
 }
 .install-panel > .setting-icon {
   margin-bottom: 18px;
@@ -1987,6 +2091,81 @@ th:last-child {
   margin-top: 8px;
   min-height: 48px;
   font-size: 13px;
+}
+.login-signup-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 18px;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface-2) 48%, transparent);
+  text-decoration: none;
+  transition:
+    transform 0.22s var(--ease-out),
+    border-color 0.22s var(--ease-out),
+    background 0.22s var(--ease-out),
+    box-shadow 0.22s var(--ease-out);
+}
+.login-signup-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-soft);
+  box-shadow: var(--shadow);
+}
+.login-signup-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  outline-offset: 3px;
+}
+.login-signup-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  color: var(--accent);
+  background: var(--surface);
+}
+.login-signup-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.login-signup-copy strong {
+  font-size: 11px;
+}
+.login-signup-copy span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.login-signup-arrow {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform 0.22s var(--ease-out), color 0.22s var(--ease-out);
+}
+.login-signup-card:hover .login-signup-arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+.login-switch {
+  margin: 18px 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 10px;
+}
+.login-switch a {
+  color: var(--accent);
+  font-weight: 650;
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+.login-switch a:hover {
+  text-decoration: underline;
 }
 .login-security {
   display: flex;

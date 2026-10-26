@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { ArrowRight, LoaderCircle, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight, LoaderCircle, ShieldCheck } from "lucide-react";
 import { Brand } from "./brand";
 import { Button } from "./ui/button";
 export function LoginForm({ configured }: { configured: boolean }) {
@@ -124,7 +125,16 @@ export function LoginForm({ configured }: { configured: boolean }) {
               </Button>
             </form>
           )}
-          {configured && <p className="login-switch">New to Moni? <a href="/signup">Create your space</a></p>}
+          {configured && (
+            <Link href="/signup" className="login-signup-card">
+              <span className="login-signup-icon"><ArrowUpRight size={17} /></span>
+              <span className="login-signup-copy">
+                <strong>New to Moni?</strong>
+                <span>Create your own private space</span>
+              </span>
+              <ArrowRight size={17} className="login-signup-arrow" />
+            </Link>
+          )}
           <p className="login-security">
             <ShieldCheck size={15} />A private account, just for you.
           </p>
