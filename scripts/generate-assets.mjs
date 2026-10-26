@@ -6,9 +6,9 @@ await mkdir(dir, { recursive: true });
 // Combined artwork bounds were (128,90)..(406,377), off-center in a 512px canvas.
 // Center the complete mark, including the dot, before scaling each asset.
 const mark =
-  '<g transform="translate(-11 22.5)"><path d="M155 350V200a55 55 0 0 1 110 0v112-112a55 55 0 0 1 110 0v150" stroke="#f8f7ff" stroke-width="54" stroke-linecap="round" fill="none"/><circle cx="381" cy="115" r="25" fill="#67e2d1"/></g>';
+  '<g transform="translate(-11 22.5)"><path d="M155 350V200a55 55 0 0 1 110 0v112-112a55 55 0 0 1 110 0v150" stroke="#fffaf3" stroke-width="54" stroke-linecap="round" fill="none"/><circle cx="381" cy="115" r="25" fill="#adc241"/></g>';
 const iconGradient =
-  '<defs><linearGradient id="icon-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#686ee5"/><stop offset="1" stop-color="#0fa89a"/></linearGradient></defs>';
+  '<defs><linearGradient id="icon-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#985463"/><stop offset="1" stop-color="#f18e90"/></linearGradient></defs>';
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">${iconGradient}<rect width="512" height="512" fill="url(#icon-gradient)"/>${mark}</svg>`;
 await writeFile(new URL("icon.svg", dir), svg);
 for (const [name, size] of [
@@ -30,7 +30,7 @@ for (const [w, h] of [
   [1290, 2796],
   [1320, 2868],
 ]) {
-  const splash = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs><linearGradient id="splash-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1efff"/><stop offset=".5" stop-color="#f8f7fc"/><stop offset="1" stop-color="#e9faf6"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#splash-gradient)"/><svg x="${(w - 210) / 2}" y="${(h - 210) / 2}" width="210" height="210" viewBox="0 0 512 512">${iconGradient}<rect width="512" height="512" rx="130" fill="url(#icon-gradient)"/>${mark}</svg></svg>`;
+  const splash = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs><linearGradient id="splash-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3e8"/><stop offset=".5" stop-color="#fffaf3"/><stop offset="1" stop-color="#fffed8"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#splash-gradient)"/><svg x="${(w - 210) / 2}" y="${(h - 210) / 2}" width="210" height="210" viewBox="0 0 512 512">${iconGradient}<rect width="512" height="512" rx="130" fill="url(#icon-gradient)"/>${mark}</svg></svg>`;
   await sharp(Buffer.from(splash))
     .png()
     .toFile(fileURLToPath(new URL(`startup-${w}x${h}.png`, dir)));
