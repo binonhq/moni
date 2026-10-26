@@ -1,7 +1,35 @@
-export const categoryIcons = ["utensils", "users", "heart", "shopping-bag", "fuel", "bus", "house", "coffee", "heart-pulse", "ticket", "graduation-cap", "gift", "plane", "briefcase", "tag"] as const;
-export type CategoryIconName = typeof categoryIcons[number];
+export const categoryIcons = [
+  "utensils",
+  "users",
+  "heart",
+  "shopping-bag",
+  "fuel",
+  "bus",
+  "house",
+  "coffee",
+  "heart-pulse",
+  "ticket",
+  "graduation-cap",
+  "gift",
+  "plane",
+  "briefcase",
+  "tag",
+] as const;
+export type CategoryIconName = (typeof categoryIcons)[number];
 export const categoryIconLabels: Record<CategoryIconName, string> = {
-  utensils: "Food", users: "Friends", heart: "Love", "shopping-bag": "Shopping", fuel: "Gas", bus: "Transport",
-  house: "Home", coffee: "Coffee", "heart-pulse": "Health", ticket: "Entertainment", "graduation-cap": "Education",
-  gift: "Gifts", plane: "Travel", briefcase: "Work", tag: "Other",
+  utensils: "Food",
+  users: "Friends",
+  heart: "Love",
+  "shopping-bag": "Shopping",
+  fuel: "Gas",
+  bus: "Transport",
+  house: "Home",
+  coffee: "Coffee",
+  "heart-pulse": "Health",
+  ticket: "Entertainment",
+  "graduation-cap": "Education",
+  gift: "Gifts",
+  plane: "Travel",
+  briefcase: "Work",
+  tag: "Other",
 };

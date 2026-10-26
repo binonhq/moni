@@ -39,12 +39,12 @@ Keep TLS enabled. A Neon URL with `sslmode=verify-full` explicitly verifies the 
 
 Under Project → Settings → Environment Variables, add these for **Production**:
 
-| Variable | Value |
-| --- | --- |
-| `DATABASE_URL` | Pooled URL supplied by the Neon integration |
-| `DATABASE_URL_UNPOOLED` | Optional direct URL to the same database |
-| `BETTER_AUTH_URL` | Your stable production origin, e.g. `https://moni-yourname.vercel.app`, without a trailing slash |
-| `BETTER_AUTH_SECRET` | A freshly generated secret of at least 32 characters |
+| Variable                | Value                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`          | Pooled URL supplied by the Neon integration                                                      |
+| `DATABASE_URL_UNPOOLED` | Optional direct URL to the same database                                                         |
+| `BETTER_AUTH_URL`       | Your stable production origin, e.g. `https://moni-yourname.vercel.app`, without a trailing slash |
+| `BETTER_AUTH_SECRET`    | A freshly generated secret of at least 32 characters                                             |
 
 Generate the authentication secret in your own terminal:
 
@@ -129,7 +129,9 @@ npm run dev          Local development, http://127.0.0.1:3000
 npm run build        Optimized production build
 npm start            Run the built application locally
 npm run typecheck    Strict TypeScript checking
-npm test             32 isolated database-backed tests; no Neon credentials needed
+npm run format       Format source, tests, scripts, and documentation with Prettier
+npm run format:check Verify formatting without changing files
+npm test             41 isolated database-backed tests; no Neon credentials needed
 npm run db:generate  Generate migrations after schema changes
 npm run db:migrate   Apply committed migrations to the configured database
 npm run setup:user   Create the single owner interactively
@@ -144,20 +146,20 @@ Webpack is selected explicitly because the Turbopack CSS worker failed on the or
 
 Only ingestion accepts the Bearer token. All reads, manual edits, deletes, exports, integration management, and dashboard manual entry require an authenticated owner session. Browser mutations require an exact trusted Origin in addition to session cookies.
 
-| Endpoint | Authentication | Behavior |
-| --- | --- | --- |
-| `POST /api/transactions` | Ingestion Bearer token | Create an expense |
-| `GET /api/transactions` | Owner session | Keyset-paginated history |
-| `PATCH /api/transactions/:id` | Owner session + Origin | Edit amount, timestamp, title, or category |
-| `GET /api/categories` | Owner session | List categories and icon keys |
-| `POST /api/categories` | Owner session + Origin | Create a category with a name and icon |
-| `DELETE /api/categories/:id` | Owner session + Origin | Remove a category; linked expenses become Uncategorized |
-| `DELETE /api/transactions/:id` | Owner session + Origin | Delete one expense |
-| `POST /api/dashboard/transactions` | Owner session + Origin | Manual entry from the app |
-| `GET /api/stats?month=2026-10` | Owner session | Vietnam-local reports |
-| `GET /api/export` | Owner session | Snapshot-consistent CSV |
-| `GET /api/integration` | Owner session | Token status and last use; never token material |
-| `DELETE /api/integration` | Owner session + Origin | Revoke current ingestion token |
+| Endpoint                           | Authentication         | Behavior                                                |
+| ---------------------------------- | ---------------------- | ------------------------------------------------------- |
+| `POST /api/transactions`           | Ingestion Bearer token | Create an expense                                       |
+| `GET /api/transactions`            | Owner session          | Keyset-paginated history                                |
+| `PATCH /api/transactions/:id`      | Owner session + Origin | Edit amount, timestamp, title, or category              |
+| `GET /api/categories`              | Owner session          | List categories and icon keys                           |
+| `POST /api/categories`             | Owner session + Origin | Create a category with a name and icon                  |
+| `DELETE /api/categories/:id`       | Owner session + Origin | Remove a category; linked expenses become Uncategorized |
+| `DELETE /api/transactions/:id`     | Owner session + Origin | Delete one expense                                      |
+| `POST /api/dashboard/transactions` | Owner session + Origin | Manual entry from the app                               |
+| `GET /api/stats?month=2026-10`     | Owner session          | Vietnam-local reports                                   |
+| `GET /api/export`                  | Owner session          | Snapshot-consistent CSV                                 |
+| `GET /api/integration`             | Owner session          | Token status and last use; never token material         |
+| `DELETE /api/integration`          | Owner session + Origin | Revoke current ingestion token                          |
 
 The ingestion body is strictly:
 
@@ -168,7 +170,7 @@ The ingestion body is strictly:
 }
 ```
 
-`amount` must be a positive JSON integer no larger than `9007199254740991`. The optional `title` field accepts up to 120 characters, capitalizes each word, and defaults to `Expense`; optional `categoryId` accepts an existing category UUID or `null` for Uncategorized. Existing Shortcuts can keep sending only amount and timestamp. Unknown fields, fractions, numeric strings, missing timezones, and invalid dates are rejected. Timestamps support years 1900–9998. Amounts are stored as PostgreSQL `bigint`; database sums and averages use integer/BigInt arithmetic. JSON **response amounts are decimal strings** so aggregate values never lose precision. Charts alone use normalized numeric display coordinates; tooltips and exact-value tables preserve original amounts.
+`amount` must be a positive whole VND value no larger than `9007199254740991`; JSON numbers and whole-number decimal strings are accepted. The optional `title` field accepts up to 120 characters, capitalizes each word, and defaults to `Expense`; optional `categoryId` accepts an existing category UUID or `null` for Uncategorized. Existing Shortcuts can keep sending only amount and timestamp. Unknown fields, fractions, missing timezones, and invalid dates are rejected. Timestamps support years 1900–9998. Amounts are stored as PostgreSQL `bigint`; database sums and averages use integer/BigInt arithmetic. JSON **response amounts are decimal strings** so aggregate values never lose precision. Charts alone use normalized numeric display coordinates; tooltips and exact-value tables preserve original amounts.
 
 The expense dialog formats VND digits as you type (for example `100.000`), shows `0` when cleared, and removes leading zeroes. It opens without focusing an input and shows the full category list without an inner scroller. Titles are automatically capitalized, and the default title is `Expense`. Titles and categories appear in the preview, transaction lists, and CSV export. Use **New category** in the expense dialog to create a category with a name and icon. Settings lists every category and can remove one; expenses assigned to a removed category become Uncategorized. The migration seeds Food, Friend, Love, Shopping, Gas, Transport, Bills, Coffee, Health, Entertainment, Education, and Other. Existing expenses keep their amounts and dates and use `Expense` / Uncategorized. Dashboard category totals cover the current month; transaction filters accept `categoryId` or `uncategorized`.
 
@@ -192,7 +194,7 @@ Run `npm run assets` after editing the vector icon source generator. Startup ima
 
 ## Verification and physical iPhone checklist
 
-Completed: production build, TypeScript checking, and 39 automated tests covering migrated PostgreSQL behavior, categories, titles, legacy Shortcut retries, exact totals, authentication, and rate limits. A focused Chromium browser check covered creating/editing expenses and categories, formatted amounts, no input autofocus, filter layouts at 320/375/440px, the bottom navigation on short pages, and route scroll reset. The Apple touch icon artwork is centered to the pixel. Physical iPhone installation and Safari behavior still need a check on the device.
+Completed: production build, TypeScript checking, and 41 automated tests covering migrated PostgreSQL behavior, categories, titles, legacy Shortcut retries, exact totals, authentication, and rate limits. A focused Chromium browser check covered creating/editing expenses and categories, formatted amounts, no input autofocus, filter layouts at 320/375/440px, the bottom navigation on short pages, and route scroll reset. The Apple touch icon artwork is centered to the pixel. Physical iPhone installation and Safari behavior still need a check on the device.
 
 Refresh is in the top bar beside Personal workspace. Add expense is a circular floating button above the mobile navigation. The monthly expense card includes last month's total and the percentage change. If an installed iPhone Home Screen icon still shows the old artwork, remove that shortcut and add Moni to the Home Screen again using Safari; expenses remain in Neon.
 
