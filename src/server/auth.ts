@@ -5,7 +5,7 @@ import { getDb } from "@/db";
 import { createAuth } from "./auth-config";
 let auth: ReturnType<typeof createAuth> | undefined;
 export function getAuth() {
-  return (auth ??= createAuth(getDb()));
+  return (auth ??= createAuth(getDb(), true));
 }
 export async function requirePageSession() {
   if (!process.env.DATABASE_URL || !process.env.BETTER_AUTH_SECRET)

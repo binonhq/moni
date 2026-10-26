@@ -22,6 +22,13 @@
       "when": 1792945836541,
       "tag": "0002_careless_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792947000000,
+      "tag": "0003_multi_user",
+      "breakpoints": true
     }
   ]
 }

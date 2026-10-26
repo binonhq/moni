@@ -17,12 +17,13 @@ export async function checkToken(db: Database, request: Request) {
   const header = request.headers.get("authorization");
   if (!header?.match(/^Bearer [A-Za-z0-9_-]{43}$/))
     throw new ApiError(401, "UNAUTHORIZED", "A valid ingestion token is required.");
-  const [token] = await db.select().from(apiToken).where(eq(apiToken.id, 1));
+  const [token] = await db.select().from(apiToken).where(eq(apiToken.hash, digest(header.slice(7))));
   const supplied = Buffer.from(digest(header.slice(7)), "hex");
   const expected = Buffer.from(token?.hash ?? "0".repeat(64), "hex");
   if (!token || expected.length !== supplied.length || !timingSafeEqual(supplied, expected))
     throw new ApiError(401, "UNAUTHORIZED", "A valid ingestion token is required.");
-  await db.update(apiToken).set({ lastUsedAt: new Date() }).where(eq(apiToken.hash, token.hash));
+  await db.update(apiToken).set({ lastUsedAt: new Date() }).where(eq(apiToken.id, token.id));
+  return token.userId ?? undefined;
 }
 export async function rateLimit(db: Database, identity: string, maximum = 120, seconds = 60) {
   const key = digest(identity);

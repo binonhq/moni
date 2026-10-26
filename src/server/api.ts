@@ -8,14 +8,16 @@ export async function authorize(request: Request, ingestion = false) {
   const db = getDb();
   await rateLimit(db, `edge:${clientIdentity(request)}`, 240);
   if (ingestion) {
-    await checkToken(db, request);
-    await rateLimit(db, "ingestion", 60);
+    const userId = await checkToken(db, request);
+    if (!userId) throw new ApiError(401, "UNAUTHORIZED", "This token is not assigned to a user.");
+    await rateLimit(db, `ingestion:${userId}`, 60);
+    return { db, userId };
   } else {
     // A Bearer token never grants dashboard read, edit, export, or delete access.
     const session = await getAuth().api.getSession({ headers: request.headers });
     if (!session) throw new ApiError(401, "UNAUTHORIZED", "Please sign in to Moni.");
     if (!["GET", "HEAD"].includes(request.method)) requireSameOrigin(request);
     await rateLimit(db, `session:${session.user.id}`, 180);
+    return { db, userId: session.user.id };
   }
-  return db;
 }

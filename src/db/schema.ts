@@ -25,7 +25,6 @@ export const user = pgTable(
     createdAt: instant("created_at").notNull().defaultNow(),
     updatedAt: instant("updated_at").notNull().defaultNow(),
   },
-  () => [uniqueIndex("single_owner").on(sql`(true)`)],
 );
 export const session = pgTable(
   "session",
@@ -80,12 +79,13 @@ export const categories = pgTable(
   "categories",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     icon: text("icon").notNull().default("tag"),
     createdAt: instant("created_at").notNull().defaultNow(),
   },
   t => [
-    uniqueIndex("categories_name_unique").on(sql`lower(${t.name})`),
+    uniqueIndex("categories_user_name_unique").on(t.userId, sql`lower(${t.name})`),
     check("category_name_length", sql`length(trim(${t.name})) BETWEEN 1 AND 40`),
   ],
 );
@@ -93,6 +93,7 @@ export const transactions = pgTable(
   "transactions",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
     amount: bigint("amount", { mode: "bigint" }).notNull(),
     title: text("title").notNull().default("Expense"),
     categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
@@ -117,11 +118,12 @@ export const apiToken = pgTable(
   "api_token",
   {
     id: integer("id").primaryKey().default(1),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
     hash: text("hash").notNull(),
     createdAt: instant("created_at").notNull().defaultNow(),
     lastUsedAt: instant("last_used_at"),
   },
-  t => [check("single_token", sql`${t.id} = 1`)],
+  t => [uniqueIndex("api_token_user_unique").on(t.userId)],
 );
 export const rateBuckets = pgTable(
   "rate_buckets",

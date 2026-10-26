@@ -5,20 +5,20 @@ import { deleteTransaction, updateTransaction } from "@/server/transactions";
 type Context = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, context: Context) {
   return endpoint(async () => {
-    const db = await authorize(request);
+    const { db, userId } = await authorize(request);
     return json({
       data: await updateTransaction(
         db,
         (await context.params).id,
-        updateSchema.parse(await readJson(request)),
+        updateSchema.parse(await readJson(request)), userId,
       ),
     });
   });
 }
 export async function DELETE(request: Request, context: Context) {
   return endpoint(async () => {
-    const db = await authorize(request);
-    await deleteTransaction(db, (await context.params).id);
+    const { db, userId } = await authorize(request);
+    await deleteTransaction(db, (await context.params).id, userId);
     return new Response(null, { status: 204, headers: privateHeaders });
   });
 }

@@ -29,6 +29,7 @@ export async function createTransaction(
   db: Database,
   input: TransactionInput,
   key?: string | null,
+  userId?: string,
 ) {
   if (key && !/^[\x21-\x7e]{1,128}$/.test(key))
     throw new ApiError(
@@ -51,7 +52,8 @@ export async function createTransaction(
     if (key) {
       // Transaction-scoped lock serializes concurrent requests for this key across instances.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
-      const [prior] = await tx.select().from(idempotency).where(eq(idempotency.key, key));
+      const scopedKey = userId ? `${userId}:${key}` : key;
+      const [prior] = await tx.select().from(idempotency).where(eq(idempotency.key, scopedKey));
       if (prior) {
         const priorData = prior.response;
         const compatibleLegacyPayload =
@@ -76,7 +78,7 @@ export async function createTransaction(
         };
       }
     }
-    const category = await findCategory(tx, categoryId);
+    const category = await findCategory(tx, categoryId, userId);
     const [row] = await tx
       .insert(transactions)
       .values({
@@ -84,16 +86,18 @@ export async function createTransaction(
         timestamp: new Date(input.timestamp),
         title,
         categoryId,
+        userId,
       })
       .returning();
     const data = serialize(row, category);
-    if (key) await tx.insert(idempotency).values({ key, fingerprint, response: data });
+    if (key) await tx.insert(idempotency).values({ key: userId ? `${userId}:${key}` : key, fingerprint, response: data });
     return { data, replayed: false };
   });
 }
 const cursorSchema = z.object({ timestamp: timestampSchema, id: z.uuid() }).strict();
-export function filters(query: TransactionQuery, includeCursor = true): SQL[] {
+export function filters(query: TransactionQuery, includeCursor = true, userId?: string): SQL[] {
   const conditions: SQL[] = [];
+  if (userId) conditions.push(eq(transactions.userId, userId));
   if (query.from) conditions.push(gte(transactions.timestamp, new Date(query.from)));
   if (query.to) conditions.push(lt(transactions.timestamp, new Date(query.to)));
   if (query.minAmount) conditions.push(gte(transactions.amount, BigInt(query.minAmount)));
@@ -123,13 +127,14 @@ export function filters(query: TransactionQuery, includeCursor = true): SQL[] {
 export async function listTransactions(
   db: Database,
   query: TransactionQuery,
+  userId?: string,
 ): Promise<TransactionPage> {
   const [rows, [summary]] = await Promise.all([
     db
       .select({ transaction: transactions, category: categories })
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
-      .where(and(...filters(query)))
+      .where(and(...filters(query, true, userId)))
       .orderBy(desc(transactions.timestamp), desc(transactions.id))
       .limit(query.limit + 1),
     db
@@ -138,7 +143,7 @@ export async function listTransactions(
         count: sql<number>`count(*)::int`,
       })
       .from(transactions)
-      .where(and(...filters(query, false))),
+      .where(and(...filters(query, false, userId))),
   ]);
   const data = rows.slice(0, query.limit).map(row => serialize(row.transaction, row.category));
   const last = data.at(-1);
@@ -158,10 +163,11 @@ export async function updateTransaction(
   db: Database,
   id: string,
   input: Partial<TransactionInput>,
+  userId?: string,
 ) {
   z.uuid().parse(id);
   return db.transaction(async tx => {
-    if (input.categoryId) await findCategory(tx, input.categoryId);
+    if (input.categoryId) await findCategory(tx, input.categoryId, userId);
     const [row] = await tx
       .update(transactions)
       .set({
@@ -171,17 +177,17 @@ export async function updateTransaction(
         ...(input.timestamp ? { timestamp: new Date(input.timestamp) } : {}),
         updatedAt: new Date(),
       })
-      .where(eq(transactions.id, id))
+      .where(userId ? and(eq(transactions.id, id), eq(transactions.userId, userId)) : eq(transactions.id, id))
       .returning();
     if (!row) throw new ApiError(404, "NOT_FOUND", "This transaction no longer exists.");
-    return serialize(row, await findCategory(tx, row.categoryId));
+    return serialize(row, await findCategory(tx, row.categoryId, userId));
   });
 }
-export async function deleteTransaction(db: Database, id: string) {
+export async function deleteTransaction(db: Database, id: string, userId?: string) {
   z.uuid().parse(id);
   const rows = await db
     .delete(transactions)
-    .where(eq(transactions.id, id))
+    .where(userId ? and(eq(transactions.id, id), eq(transactions.userId, userId)) : eq(transactions.id, id))
     .returning({ id: transactions.id });
   if (!rows.length) throw new ApiError(404, "NOT_FOUND", "This transaction no longer exists.");
 }

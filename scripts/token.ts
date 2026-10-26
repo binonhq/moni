@@ -3,7 +3,8 @@ import { database } from "./environment";
 import { apiToken, user } from "../src/db/schema";
 const { db, pool } = database();
 try {
-  if (!(await db.select({ id: user.id }).from(user).limit(1)).length)
+  const [owner] = await db.select({ id: user.id }).from(user).limit(1);
+  if (!owner)
     throw new Error("OWNER_REQUIRED");
   if (process.argv[2] === "revoke") {
     await db.delete(apiToken);
@@ -13,7 +14,7 @@ try {
     const hash = createHash("sha256").update(token).digest("hex");
     await db
       .insert(apiToken)
-      .values({ id: 1, hash })
+      .values({ id: 1, userId: owner.id, hash })
       .onConflictDoUpdate({
         target: apiToken.id,
         set: { hash, createdAt: new Date(), lastUsedAt: null },

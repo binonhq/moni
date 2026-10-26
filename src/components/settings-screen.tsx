@@ -42,6 +42,8 @@ export function SettingsScreen() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [categoryToRemove, setCategoryToRemove] = useState<Category | null>(null);
   const [categoryBusy, setCategoryBusy] = useState(false);
+  const [generatedToken, setGeneratedToken] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
   async function revokeToken() {
     setBusy(true);
     setActionError(null);
@@ -54,6 +56,19 @@ export function SettingsScreen() {
       setActionError(e instanceof Error ? e.message : "Could not revoke token.");
     } finally {
       setBusy(false);
+    }
+  }
+  async function generateToken() {
+    setGenerating(true);
+    setActionError(null);
+    try {
+      const result = await api<{ data: { token: string } }>("/api/integration", { method: "POST" });
+      setGeneratedToken(result.data.token);
+      await integration.refresh();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Could not generate token.");
+    } finally {
+      setGenerating(false);
     }
   }
   async function exportCsv() {
@@ -197,7 +212,7 @@ export function SettingsScreen() {
               </span>
               <div>
                 <strong>Private by design</strong>
-                <span>One account. Only your finances.</span>
+                <span>Your account. Only your finances.</span>
               </div>
             </div>
           </section>
@@ -343,13 +358,21 @@ export function SettingsScreen() {
                 <KeyRound size={16} />
                 Manage API access
               </summary>
-              <p>
-                Create or rotate your token using <code>npm run token:rotate</code> on the trusted
-                machine connected to your database. The new token appears once in that terminal.
-              </p>
+              <p>Generate a token for this account. It is shown once, so copy it into your Shortcut immediately.</p>
+              <Button variant="secondary" onClick={() => void generateToken()} disabled={!online || generating}>
+                <KeyRound size={17} />
+                {generating ? "Generating…" : integration.data?.data.active ? "Rotate token" : "Generate token"}
+              </Button>
+              {generatedToken && (
+                <div className="token-generated" role="status">
+                  <strong>Copy this token now</strong>
+                  <code>{generatedToken}</code>
+                  <p className="small">For your security, Moni will not show it again.</p>
+                </div>
+              )}
               <p>
                 Paste it into your Shortcut’s Authorization header. Rotation immediately replaces
-                the old token. Moni never sends the token to this browser.
+                the old token. Keep it private: it grants permission to add expenses for this account.
               </p>
               {integration.data?.data.active && (
                 <Button
@@ -415,7 +438,7 @@ export function SettingsScreen() {
         open={revoke}
         onOpenChange={setRevoke}
         title="Disconnect your Shortcut?"
-        description="The current ingestion token will stop working immediately. Existing expenses stay safe. Generate a new token in your trusted terminal to reconnect."
+        description="The current ingestion token will stop working immediately. Existing expenses stay safe. You can generate a new token here whenever you are ready to reconnect."
         label="Revoke token"
         onConfirm={revokeToken}
         busy={busy}

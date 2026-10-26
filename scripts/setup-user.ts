@@ -21,11 +21,11 @@ try {
   const auth = createAuth(db, true);
   await auth.api.signUpEmail({ body: { name: "Owner", email, password: pass } });
   await db.delete(session);
-  console.log("Your private owner account is ready. Public signup remains disabled.");
+  console.log("Your private account is ready. Additional users can sign up from the app.");
 } catch (e) {
   console.error(
     e instanceof Error && e.message === "OWNER_EXISTS"
-      ? "An owner already exists. Use npm run password:reset if necessary."
+      ? "An account already exists. Use npm run password:reset if necessary."
       : "Setup failed. Check environment, migrations, email, and password length. No credentials have been logged.",
   );
   process.exitCode = 1;

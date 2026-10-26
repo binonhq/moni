@@ -5,12 +5,12 @@ import { clientIdentity, rateLimit, requireSameOrigin } from "@/server/security"
 async function handler(request: Request) {
   return endpoint(async () => {
     const path = new URL(request.url).pathname.replace("/api/auth/", "");
-    if (!new Set(["sign-in/email", "get-session", "sign-out", "change-password"]).has(path))
+    if (!new Set(["sign-in/email", "sign-up/email", "get-session", "sign-out", "change-password"]).has(path))
       throw new ApiError(404, "NOT_FOUND", "This endpoint is unavailable.");
     if (request.method !== "GET") requireSameOrigin(request);
     const db = getDb();
     await rateLimit(db, `auth:${clientIdentity(request)}`, 30);
-    if (path === "sign-in/email" || path === "change-password")
+    if (path === "sign-in/email" || path === "sign-up/email" || path === "change-password")
       await rateLimit(db, "auth:credential", 10, 300);
     const response = await getAuth().handler(request);
     if (!response.ok) {

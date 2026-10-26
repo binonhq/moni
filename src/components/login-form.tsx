@@ -85,7 +85,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
                 npm run setup:user
               </code>
               <p className="small">
-                Public registration is disabled. Only the owner can create the first account.
+                Once authentication is configured, anyone can create their own private account.
               </p>
             </div>
           ) : (
@@ -124,6 +124,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
               </Button>
             </form>
           )}
+          {configured && <p className="login-switch">New to Moni? <a href="/signup">Create your space</a></p>}
           <p className="login-security">
             <ShieldCheck size={15} />A private account, just for you.
           </p>

@@ -13,7 +13,7 @@ import {
 import type { DayTotal, Stats } from "@/lib/types";
 import { serialize } from "./transactions";
 
-export async function getStats(db: Database, month: string, now = new Date()): Promise<Stats> {
+export async function getStats(db: Database, month: string, now = new Date(), userId?: string): Promise<Stats> {
   const { start, end, days } = monthBounds(month);
   const todayStart = dayStart(localDay(now));
   const tomorrow = dayStart(addDays(localDay(now), 1));
@@ -45,7 +45,8 @@ export async function getStats(db: Database, month: string, now = new Date()): P
           previousMonth: sumBetween(previous.start, previous.end),
           previousMonthToDate: sumBetween(previous.start, previousCutoff),
         })
-        .from(t);
+        .from(t)
+        .where(userId ? eq(t.userId, userId) : undefined);
       const dayExpression = sql<string>`to_char(${t.timestamp} AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD')`;
       const grouped = await tx
         .select({
@@ -54,7 +55,7 @@ export async function getStats(db: Database, month: string, now = new Date()): P
           count: sql<number>`count(*)::int`,
         })
         .from(t)
-        .where(and(gte(t.timestamp, start), lt(t.timestamp, end)))
+        .where(and(gte(t.timestamp, start), lt(t.timestamp, end), userId ? eq(t.userId, userId) : undefined))
         .groupBy(dayExpression)
         .orderBy(dayExpression);
       const dayMap = new Map(grouped.map(d => [d.date, d]));
@@ -71,7 +72,7 @@ export async function getStats(db: Database, month: string, now = new Date()): P
         })
         .from(t)
         .where(
-          and(gte(t.timestamp, monthBounds(shiftMonth(month, -11)).start), lt(t.timestamp, end)),
+          and(gte(t.timestamp, monthBounds(shiftMonth(month, -11)).start), lt(t.timestamp, end), userId ? eq(t.userId, userId) : undefined),
         )
         .groupBy(monthExpression)
         .orderBy(monthExpression);
@@ -90,7 +91,7 @@ export async function getStats(db: Database, month: string, now = new Date()): P
         })
         .from(t)
         .leftJoin(categories, eq(t.categoryId, categories.id))
-        .where(and(gte(t.timestamp, start), lt(t.timestamp, end)))
+        .where(and(gte(t.timestamp, start), lt(t.timestamp, end), userId ? eq(t.userId, userId) : undefined))
         .groupBy(categories.id, categories.name, categories.icon)
         .orderBy(sql`sum(${t.amount}) DESC`, categories.name);
       const byCategory = categoryRows.map(row => ({
@@ -102,7 +103,7 @@ export async function getStats(db: Database, month: string, now = new Date()): P
         .select({ transaction: t, category: categories })
         .from(t)
         .leftJoin(categories, eq(t.categoryId, categories.id))
-        .where(and(gte(t.timestamp, start), lt(t.timestamp, end)))
+        .where(and(gte(t.timestamp, start), lt(t.timestamp, end), userId ? eq(t.userId, userId) : undefined))
         .orderBy(desc(t.amount), desc(t.timestamp), desc(t.id))
         .limit(1);
       const highestDay = grouped.reduce<DayTotal | null>(

@@ -6,11 +6,11 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
   return endpoint(async () => {
-    const db = await authorize(request, true);
+    const { db, userId } = await authorize(request, true);
     const result = await createTransaction(
       db,
       transactionSchema.parse(await readJson(request)),
-      request.headers.get("idempotency-key"),
+      request.headers.get("idempotency-key"), userId,
     );
     return json(result, result.replayed ? 200 : 201, {
       "Idempotency-Replayed": String(result.replayed),
@@ -19,11 +19,11 @@ export async function POST(request: Request) {
 }
 export async function GET(request: Request) {
   return endpoint(async () => {
-    const db = await authorize(request);
+    const { db, userId } = await authorize(request);
     return json(
       await listTransactions(
         db,
-        querySchema.parse(Object.fromEntries(new URL(request.url).searchParams)),
+        querySchema.parse(Object.fromEntries(new URL(request.url).searchParams)), userId,
       ),
     );
   });
