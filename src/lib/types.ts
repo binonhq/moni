@@ -10,7 +10,12 @@ export type Transaction = {
   createdAt: string;
   updatedAt: string;
 };
-export type TransactionPage = { data: Transaction[]; nextCursor: string | null };
+export type TransactionPage = {
+  data: Transaction[];
+  nextCursor: string | null;
+  total: string;
+  count: number;
+};
 export type DayTotal = { date: string; amount: string; count: number };
 export type Stats = {
   month: string;

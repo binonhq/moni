@@ -1163,6 +1163,29 @@ th:last-child {
   gap: 12px;
   margin-bottom: 18px;
 }
+.history-total {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 9px;
+  row-gap: 1px;
+  min-width: 0;
+}
+.history-total > span,
+.history-total small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.history-total strong {
+  color: var(--accent);
+  font-size: 18px;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.history-total small {
+  grid-column: 1 / -1;
+}
 .filter-dot {
   width: 6px;
   height: 6px;

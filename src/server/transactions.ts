@@ -124,17 +124,28 @@ export async function listTransactions(
   db: Database,
   query: TransactionQuery,
 ): Promise<TransactionPage> {
-  const rows = await db
-    .select({ transaction: transactions, category: categories })
-    .from(transactions)
-    .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .where(and(...filters(query)))
-    .orderBy(desc(transactions.timestamp), desc(transactions.id))
-    .limit(query.limit + 1);
+  const [rows, [summary]] = await Promise.all([
+    db
+      .select({ transaction: transactions, category: categories })
+      .from(transactions)
+      .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(and(...filters(query)))
+      .orderBy(desc(transactions.timestamp), desc(transactions.id))
+      .limit(query.limit + 1),
+    db
+      .select({
+        total: sql<string>`coalesce(sum(${transactions.amount}), 0)::text`,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(transactions)
+      .where(and(...filters(query, false))),
+  ]);
   const data = rows.slice(0, query.limit).map(row => serialize(row.transaction, row.category));
   const last = data.at(-1);
   return {
     data,
+    total: summary.total,
+    count: summary.count,
     nextCursor:
       rows.length > query.limit && last
         ? Buffer.from(JSON.stringify({ timestamp: last.timestamp, id: last.id })).toString(

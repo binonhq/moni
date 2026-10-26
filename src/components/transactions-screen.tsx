@@ -112,7 +112,15 @@ export function TransactionsScreen() {
         description="Your history. A little more perspective."
       />
       <div className="history-toolbar">
-        <span className="small muted">Newest first · Vietnam time</span>
+        <div className="history-total" aria-live="polite">
+          <span>Total</span>
+          <strong>{resource.data ? money(resource.data.total) : "—"}</strong>
+          <small>
+            {resource.data
+              ? `${resource.data.count} matching expense${resource.data.count !== 1 ? "s" : ""}`
+              : "Loading transactions…"}
+          </small>
+        </div>
         <Button
           variant="secondary"
           onClick={() => setShowFilters(v => !v)}
