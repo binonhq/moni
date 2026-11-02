@@ -4,8 +4,6 @@ import { testDatabase } from "./helpers";
 import { createCategory, deleteCategory, listCategories } from "@/server/categories";
 import { createTransaction, listTransactions, updateTransaction } from "@/server/transactions";
 import { getStats } from "@/server/stats";
-import { digest } from "@/server/security";
-import { idempotency } from "@/db/schema";
 import { transactionSchema } from "@/lib/validation";
 import { normalizeAmount, formatAmountInput } from "@/lib/amount-input";
 import { csvCell } from "@/lib/csv";
@@ -18,7 +16,7 @@ afterAll(async () => {
   await test.client.close();
 });
 beforeEach(async () => {
-  await test.db.execute(sql`TRUNCATE transactions, idempotency`);
+  await test.db.execute(sql`TRUNCATE transactions`);
 });
 
 describe("expense categories and titles", () => {
@@ -114,66 +112,6 @@ describe("expense categories and titles", () => {
     expect(stats.byCategory.reduce((sum, group) => sum + BigInt(group.amount), 0n).toString()).toBe(
       stats.total,
     );
-  });
-  it("detects changed titles and categories on retries and preserves pre-migration retry keys", async () => {
-    const food = (await listCategories(test.db)).find(c => c.name === "Food")!;
-    await createTransaction(
-      test.db,
-      { ...payload, title: "Lunch", categoryId: food.id },
-      "category-retry",
-    );
-    await expect(
-      createTransaction(
-        test.db,
-        { ...payload, title: "Dinner", categoryId: food.id },
-        "category-retry",
-      ),
-    ).rejects.toMatchObject({ status: 409 });
-    await expect(
-      createTransaction(test.db, { ...payload, title: "Lunch" }, "category-retry"),
-    ).rejects.toMatchObject({ status: 409 });
-    const old = {
-      id: "00000000-0000-4000-8000-000000000002",
-      amount: "100000",
-      timestamp: new Date(payload.timestamp).toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    await test.db.insert(idempotency).values({
-      key: "old-retry",
-      fingerprint: digest(`${payload.amount}:${old.timestamp}`),
-      response: old as typeof idempotency.$inferInsert.response,
-    });
-    const replay = await createTransaction(test.db, payload, "old-retry");
-    expect(replay).toMatchObject({
-      replayed: true,
-      data: { id: old.id, title: "Expense", category: null },
-    });
-    expect((await listTransactions(test.db, { limit: 30 })).data).toHaveLength(1);
-  });
-  it("replays keyed titles created before automatic capitalization", async () => {
-    const timestamp = new Date(payload.timestamp).toISOString();
-    const old = {
-      id: "00000000-0000-4000-8000-000000000003",
-      amount: "100000",
-      title: "lunch with friends",
-      categoryId: null,
-      category: null,
-      timestamp,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    await test.db.insert(idempotency).values({
-      key: "old-title-case",
-      fingerprint: digest(`${payload.amount}:${timestamp}:${JSON.stringify([old.title, null])}`),
-      response: old,
-    });
-    const replay = await createTransaction(
-      test.db,
-      { ...payload, title: "lunch with friends" },
-      "old-title-case",
-    );
-    expect(replay).toMatchObject({ replayed: true, data: { title: "Lunch With Friends" } });
   });
 });
 describe("formatted amount input and exports", () => {

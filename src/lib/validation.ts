@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { categoryIcons } from "./categories";
 import { formatExpenseTitle } from "./title";
+export const normalizeNotificationContent = (value: string) =>
+  value.normalize("NFKC").replace(/\s+/gu, " ").trim();
 export const timestampSchema = z.iso.datetime({ offset: true }).refine(v => {
   const date = new Date(v);
   return (
@@ -19,6 +21,13 @@ export const transactionSchema = z
     categoryId: z.uuid().nullable().optional(),
   })
   .strict();
+export const ingestionTransactionSchema = transactionSchema.extend({
+  notificationContent: z
+    .string()
+    .max(10000)
+    .transform(normalizeNotificationContent)
+    .pipe(z.string().min(1, "Notification content must not be empty.")),
+});
 export const updateSchema = transactionSchema
   .partial()
   .refine(v => Object.keys(v).length > 0, "Provide an expense field to update.");
@@ -50,4 +59,5 @@ export const querySchema = z
   );
 export const monthSchema = z.string().regex(/^(?:19\d{2}|[2-9]\d{3})-(?:0[1-9]|1[0-2])$/);
 export type TransactionInput = z.infer<typeof transactionSchema>;
+export type IngestionTransactionInput = z.infer<typeof ingestionTransactionSchema>;
 export type TransactionQuery = z.infer<typeof querySchema>;

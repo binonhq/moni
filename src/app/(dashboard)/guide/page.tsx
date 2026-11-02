@@ -69,20 +69,24 @@ export default function Guide() {
             <code>Content-Type</code> to <code>application/json</code>.
           </li>
           <li>
-            Add exactly two JSON fields: <code>amount</code> as a Number and <code>timestamp</code>{" "}
-            as Text. Insert the actual extracted <strong>Magic Variables</strong>; do not type their
-            variable names as literal text.
+            Add three JSON fields: <code>amount</code> as a Number, <code>timestamp</code> as Text,
+            and <code>notificationContent</code> as Text containing the original bank notification.
+            Insert the actual extracted <strong>Magic Variables</strong>; do not type their variable
+            names as literal text.
           </li>
         </ol>
-        <pre>{'{\n  "amount": 1000000,\n  "timestamp": "2026-10-25T20:50:00+07:00"\n}'}</pre>
+        <pre>
+          {
+            '{\n  "amount": 1000000,\n  "timestamp": "2026-10-25T20:50:00+07:00",\n  "notificationContent": "Account 1234 spent 1,000,000 VND"\n}'
+          }
+        </pre>
       </section>
       <section className="panel guide-section">
-        <h2>4. Make retries safe</h2>
+        <h2>4. Retry safely</h2>
         <p>
-          Generate a UUID once for each notification and send it in the optional{" "}
-          <code>Idempotency-Key</code> header. Save that key and the exact two-field payload before
-          making the request. Retry with the same key and payload after a timeout or lost
-          connection. Generate a new key for every genuinely new expense.
+          Moni normalizes the notification text and stores only its SHA-256 hash. Retry the same
+          payload after a timeout or lost connection; the same notification will not create a
+          duplicate expense.
         </p>
         <p>
           A new transaction returns <strong>201</strong>. A successful replay returns{" "}
@@ -92,19 +96,19 @@ export default function Guide() {
         </p>
         <p>
           For <strong>400</strong>, correct the input. For <strong>401</strong>, replace the token.
-          For <strong>409</strong>, the retry key belongs to a different payload; investigate before
-          creating another expense. For <strong>429</strong>, wait for Retry-After. For network
-          failures or <strong>503</strong>, keep the saved key and payload, show a notification, and
-          offer a deliberate retry. Do not retry forever or mark an unsuccessful request as saved.
+          For
+          <strong>429</strong>, wait for Retry-After. For network failures or <strong>503</strong>,
+          keep the payload, show a notification, and offer a deliberate retry. Do not retry forever
+          or mark an unsuccessful request as saved.
         </p>
       </section>
       <section className="panel guide-section">
         <h2>5. Test before letting it run</h2>
         <p>
           Run the Shortcut manually with the example above. Confirm a 1.000.000 ₫ expense appears at
-          20:50 Vietnam time. Repeat with the same key: there should still be one expense. Repeat
-          with a new key: a second expense should appear. Delete test expenses from Transactions
-          after verifying.
+          20:50 Vietnam time. Repeat the exact payload: there should still be one expense. Change
+          the notification text: a second expense should appear. Delete test expenses from
+          Transactions after verifying.
         </p>
         <p>
           Test with an incoming transfer and an ambiguous amount; neither should be sent. Then

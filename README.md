@@ -4,7 +4,7 @@ A private, single-owner expense tracker built for iPhone. Next.js App Router, Ty
 
 ## Deploy directly to Vercel — one database
 
-Use **one Neon PostgreSQL database created through Vercel Storage / Marketplace**. That same database stores expenses, the owner account, sessions, token hashes, idempotency records, and rate limits. There is no Redis requirement, second database, separate local database, or mandatory preview branch. PGlite is used only by disposable automated tests.
+Use **one Neon PostgreSQL database created through Vercel Storage / Marketplace**. That same database stores expenses, the owner account, sessions, token hashes, notification fingerprints, and rate limits. There is no Redis requirement, second database, separate local database, or mandatory preview branch. PGlite is used only by disposable automated tests.
 
 ### 1. Create the Vercel project
 
@@ -174,9 +174,7 @@ The ingestion body is strictly:
 
 The expense dialog formats VND digits as you type (for example `100.000`), shows `0` when cleared, and removes leading zeroes. It opens without focusing an input and shows the full category list without an inner scroller. Titles are automatically capitalized, and the default title is `Expense`. Titles and categories appear in the preview, transaction lists, and CSV export. Use **New category** in the expense dialog to create a category with a name and icon. Settings lists every category and can remove one; expenses assigned to a removed category become Uncategorized. The migration seeds Food, Friend, Love, Shopping, Gas, Transport, Bills, Coffee, Health, Entertainment, Education, and Other. Existing expenses keep their amounts and dates and use `Expense` / Uncategorized. Dashboard category totals cover the current month; transaction filters accept `categoryId` or `uncategorized`.
 
-New creation returns `201 { data: Transaction, replayed: false }`. An optional `Idempotency-Key` header (1–128 printable non-space ASCII characters) serializes retries in a database transaction using an advisory lock. Same key + same normalized payload returns `200` and the original response. Reusing a key with different data returns `409`. No key means every request is a separate transaction, even with an identical amount and timestamp. Keys are global to this single owner and remain valid across token rotations.
-
-Idempotency responses are retained after edits/deletions so delayed retries cannot recreate deleted expenses. A replay reports the original creation snapshot; it does not undo later corrections. The idempotency table therefore retains original transaction data. If you ever require complete data erasure, remove that record too after stopping the corresponding Shortcut retries. No automatic key expiry can silently turn an old retry into a new expense.
+New ingestion creation requires `notificationContent` and returns `201 { data: Transaction, replayed: false }`. Moni normalizes its Unicode and whitespace, stores only a SHA-256 hash, and enforces uniqueness in PostgreSQL. Sending the same notification again returns `200` with the existing transaction and `replayed: true`. Different notification content creates a separate expense even when amount and timestamp are identical. Deleting an expense also removes its notification fingerprint, so that notification can be imported again later.
 
 History accepts `limit` (1–100), `cursor`, `from` (inclusive ISO timestamp), `to` (exclusive ISO timestamp), `minAmount`, and `maxAmount`. Results sort by timestamp descending and UUID descending to keep equal timestamps deterministic. Day subtotals on paginated history explicitly cover the loaded rows.
 
@@ -205,7 +203,7 @@ After deployment, do this short physical-device check:
 - Install through Share → Add to Home Screen → Open as Web App. Launch the icon and confirm standalone navigation and safe areas.
 - Switch light/dark/system; open the amount form with the keyboard; confirm the Save button remains reachable.
 - Turn on Airplane Mode: see an offline notice, disabled mutations, and the branded fallback on a full reload. Reconnect and confirm data refreshes.
-- Run your Shortcut once, retry with the same idempotency key, and confirm only one expense appears. Remove your test expense afterward.
+- Run your Shortcut once, retry the same notification payload, and confirm only one expense appears. Remove your test expense afterward.
 
 ## Source layout
 

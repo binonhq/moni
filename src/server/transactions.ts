@@ -1,10 +1,15 @@
 import { and, desc, eq, gte, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import type { Database } from "@/db";
-import { transactions, idempotency, categories } from "@/db/schema";
+import { transactions, categories } from "@/db/schema";
 import type { Category, Transaction, TransactionPage } from "@/lib/types";
-import type { TransactionInput, TransactionQuery } from "@/lib/validation";
+import type {
+  IngestionTransactionInput,
+  TransactionInput,
+  TransactionQuery,
+} from "@/lib/validation";
 import { timestampSchema } from "@/lib/validation";
+import { normalizeNotificationContent } from "@/lib/validation";
 import { ApiError } from "./errors";
 import { digest } from "./security";
 import { findCategory } from "./categories";
@@ -27,56 +32,23 @@ export function serialize(
 }
 export async function createTransaction(
   db: Database,
-  input: TransactionInput,
-  key?: string | null,
+  input: TransactionInput | IngestionTransactionInput,
   userId?: string,
 ) {
-  if (key && !/^[\x21-\x7e]{1,128}$/.test(key))
-    throw new ApiError(
-      400,
-      "INVALID_IDEMPOTENCY_KEY",
-      "Use 1–128 printable characters for Idempotency-Key.",
-    );
-  if (key === "")
-    throw new ApiError(400, "INVALID_IDEMPOTENCY_KEY", "Idempotency-Key must not be empty.");
   const title = formatExpenseTitle(input.title);
   const categoryId = input.categoryId ?? null;
-  // Preserve fingerprints for existing Shortcut requests that only contain amount/time.
-  const base = `${input.amount}:${new Date(input.timestamp).toISOString()}`;
-  const fingerprint = digest(
-    title === "Expense" && categoryId === null
-      ? base
-      : `${base}:${JSON.stringify([title, categoryId])}`,
-  );
+  const notificationHash =
+    "notificationContent" in input
+      ? digest(normalizeNotificationContent(input.notificationContent))
+      : null;
   return db.transaction(async tx => {
-    if (key) {
-      // Transaction-scoped lock serializes concurrent requests for this key across instances.
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
-      const scopedKey = userId ? `${userId}:${key}` : key;
-      const [prior] = await tx.select().from(idempotency).where(eq(idempotency.key, scopedKey));
-      if (prior) {
-        const priorData = prior.response;
-        const compatibleLegacyPayload =
-          priorData.amount === String(input.amount) &&
-          new Date(priorData.timestamp).toISOString() === new Date(input.timestamp).toISOString() &&
-          formatExpenseTitle(priorData.title) === title &&
-          (priorData.categoryId ?? null) === categoryId;
-        if (prior.fingerprint !== fingerprint && !compatibleLegacyPayload)
-          throw new ApiError(
-            409,
-            "IDEMPOTENCY_CONFLICT",
-            "This key was already used with different transaction data.",
-          );
-        return {
-          data: {
-            ...prior.response,
-            title: formatExpenseTitle(prior.response.title),
-            categoryId: prior.response.categoryId ?? null,
-            category: prior.response.category ?? null,
-          },
-          replayed: true,
-        };
-      }
+    if (notificationHash) {
+      const [prior] = await tx
+        .select({ transaction: transactions, category: categories })
+        .from(transactions)
+        .leftJoin(categories, eq(transactions.categoryId, categories.id))
+        .where(eq(transactions.notificationHash, notificationHash));
+      if (prior) return { data: serialize(prior.transaction, prior.category), replayed: true };
     }
     const category = await findCategory(tx, categoryId, userId);
     const [row] = await tx
@@ -86,11 +58,21 @@ export async function createTransaction(
         timestamp: new Date(input.timestamp),
         title,
         categoryId,
+        notificationHash,
         userId,
       })
+      .onConflictDoNothing({ target: transactions.notificationHash })
       .returning();
+    if (!row && notificationHash) {
+      const [prior] = await tx
+        .select({ transaction: transactions, category: categories })
+        .from(transactions)
+        .leftJoin(categories, eq(transactions.categoryId, categories.id))
+        .where(eq(transactions.notificationHash, notificationHash));
+      if (prior) return { data: serialize(prior.transaction, prior.category), replayed: true };
+    }
+    if (!row) throw new ApiError(503, "CREATE_FAILED", "Could not create this transaction.");
     const data = serialize(row, category);
-    if (key) await tx.insert(idempotency).values({ key: userId ? `${userId}:${key}` : key, fingerprint, response: data });
     return { data, replayed: false };
   });
 }
@@ -177,7 +159,11 @@ export async function updateTransaction(
         ...(input.timestamp ? { timestamp: new Date(input.timestamp) } : {}),
         updatedAt: new Date(),
       })
-      .where(userId ? and(eq(transactions.id, id), eq(transactions.userId, userId)) : eq(transactions.id, id))
+      .where(
+        userId
+          ? and(eq(transactions.id, id), eq(transactions.userId, userId))
+          : eq(transactions.id, id),
+      )
       .returning();
     if (!row) throw new ApiError(404, "NOT_FOUND", "This transaction no longer exists.");
     return serialize(row, await findCategory(tx, row.categoryId, userId));
@@ -187,7 +173,11 @@ export async function deleteTransaction(db: Database, id: string, userId?: strin
   z.uuid().parse(id);
   const rows = await db
     .delete(transactions)
-    .where(userId ? and(eq(transactions.id, id), eq(transactions.userId, userId)) : eq(transactions.id, id))
+    .where(
+      userId
+        ? and(eq(transactions.id, id), eq(transactions.userId, userId))
+        : eq(transactions.id, id),
+    )
     .returning({ id: transactions.id });
   if (!rows.length) throw new ApiError(404, "NOT_FOUND", "This transaction no longer exists.");
 }

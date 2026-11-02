@@ -9,23 +9,19 @@ import {
   uuid,
   index,
   uniqueIndex,
-  jsonb,
   check,
 } from "drizzle-orm/pg-core";
 
 const instant = (name: string) => timestamp(name, { withTimezone: true, mode: "date" });
-export const user = pgTable(
-  "user",
-  {
-    id: text("id").primaryKey(),
-    name: text("name").notNull(),
-    email: text("email").notNull().unique(),
-    emailVerified: boolean("email_verified").notNull().default(false),
-    image: text("image"),
-    createdAt: instant("created_at").notNull().defaultNow(),
-    updatedAt: instant("updated_at").notNull().defaultNow(),
-  },
-);
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: text("image"),
+  createdAt: instant("created_at").notNull().defaultNow(),
+  updatedAt: instant("updated_at").notNull().defaultNow(),
+});
 export const session = pgTable(
   "session",
   {
@@ -97,6 +93,7 @@ export const transactions = pgTable(
     amount: bigint("amount", { mode: "bigint" }).notNull(),
     title: text("title").notNull().default("Expense"),
     categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+    notificationHash: text("notification_hash"),
     timestamp: instant("timestamp").notNull(),
     createdAt: instant("created_at").notNull().defaultNow(),
     updatedAt: instant("updated_at").notNull().defaultNow(),
@@ -104,16 +101,11 @@ export const transactions = pgTable(
   t => [
     index("transactions_timestamp_id_idx").on(t.timestamp.desc(), t.id.desc()),
     index("transactions_category_timestamp_idx").on(t.categoryId, t.timestamp),
+    uniqueIndex("transactions_notification_hash_unique").on(t.notificationHash),
     check("transaction_title_length", sql`length(trim(${t.title})) BETWEEN 1 AND 120`),
     check("amount_positive_safe", sql`${t.amount} > 0 AND ${t.amount} <= 9007199254740991`),
   ],
 );
-export const idempotency = pgTable("idempotency", {
-  key: text("key").primaryKey(),
-  fingerprint: text("fingerprint").notNull(),
-  response: jsonb("response").notNull().$type<import("@/lib/types").Transaction>(),
-  createdAt: instant("created_at").notNull().defaultNow(),
-});
 export const apiToken = pgTable(
   "api_token",
   {

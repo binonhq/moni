@@ -7,7 +7,12 @@ import {
   listTransactions,
   updateTransaction,
 } from "@/server/transactions";
-import { querySchema, transactionSchema, updateSchema } from "@/lib/validation";
+import {
+  ingestionTransactionSchema,
+  querySchema,
+  transactionSchema,
+  updateSchema,
+} from "@/lib/validation";
 import { getStats } from "@/server/stats";
 import { addDays, dayStart, localDay, monthBounds, weekStart } from "@/lib/dates";
 let test: Awaited<ReturnType<typeof testDatabase>>;
@@ -19,11 +24,23 @@ afterAll(async () => {
   await test.client.close();
 });
 beforeEach(async () => {
-  await test.db.execute(sql`TRUNCATE transactions, idempotency`);
+  await test.db.execute(sql`TRUNCATE transactions`);
 });
 describe("strict transaction contract", () => {
   it("accepts the original amount and timezone-bearing timestamp payload", () => {
     expect(transactionSchema.parse(payload)).toEqual(payload);
+  });
+  it("requires and normalizes notification content for ingestion", () => {
+    expect(
+      ingestionTransactionSchema.parse({
+        ...payload,
+        notificationContent: "  Account 123\n  spent 1,000,000 VND  ",
+      }).notificationContent,
+    ).toBe("Account 123 spent 1,000,000 VND");
+    expect(ingestionTransactionSchema.safeParse(payload).success).toBe(false);
+    expect(
+      ingestionTransactionSchema.safeParse({ ...payload, notificationContent: " \n " }).success,
+    ).toBe(false);
   });
   it("accepts a whole-number amount string and normalizes it", () => {
     expect(transactionSchema.parse({ ...payload, amount: "1000" })).toEqual({
@@ -70,36 +87,38 @@ describe("database-backed transactions", () => {
     expect(a.data.id).not.toBe(b.data.id);
     expect((await listTransactions(test.db, { limit: 30 })).data).toHaveLength(2);
   });
-  it("replays the same key, including equivalent timestamp offsets", async () => {
-    const a = await createTransaction(test.db, payload, "retry-1");
-    const b = await createTransaction(
-      test.db,
-      { ...payload, timestamp: "2026-10-25T13:50:00Z" },
-      "retry-1",
-    );
+  it("replays the same normalized notification content", async () => {
+    const a = await createTransaction(test.db, {
+      ...payload,
+      notificationContent: "Account 123\nspent 1,000,000 VND",
+    });
+    const b = await createTransaction(test.db, {
+      ...payload,
+      notificationContent: "  Account 123   spent 1,000,000 VND  ",
+    });
     expect(b).toEqual({ data: a.data, replayed: true });
+    expect((await listTransactions(test.db, { limit: 30 })).data).toHaveLength(1);
   });
-  it("rejects reusing a key for a different payload", async () => {
-    await createTransaction(test.db, payload, "retry-1");
-    await expect(
-      createTransaction(test.db, { ...payload, amount: 2 }, "retry-1"),
-    ).rejects.toMatchObject({ status: 409 });
-  });
-  it("atomically handles concurrent identical retries", async () => {
+  it("atomically handles concurrent duplicate notifications", async () => {
+    const notification = { ...payload, notificationContent: "Unique bank notification" };
     const results = await Promise.all(
-      Array.from({ length: 4 }, () => createTransaction(test.db, payload, "concurrent")),
+      Array.from({ length: 4 }, () => createTransaction(test.db, notification)),
     );
     expect(new Set(results.map(r => r.data.id)).size).toBe(1);
     expect(results.filter(r => !r.replayed)).toHaveLength(1);
   });
-  it("does not recreate a deleted keyed expense on a delayed retry", async () => {
-    const original = await createTransaction(test.db, payload, "late");
+  it("allows distinct notifications with identical transaction data", async () => {
+    const a = await createTransaction(test.db, { ...payload, notificationContent: "Notice A" });
+    const b = await createTransaction(test.db, { ...payload, notificationContent: "Notice B" });
+    expect(a.data.id).not.toBe(b.data.id);
+  });
+  it("allows a notification to be imported again after its transaction is deleted", async () => {
+    const notification = { ...payload, notificationContent: "Deleted notice" };
+    const original = await createTransaction(test.db, notification);
     await deleteTransaction(test.db, original.data.id);
-    expect(await createTransaction(test.db, payload, "late")).toEqual({
-      data: original.data,
-      replayed: true,
-    });
-    expect((await listTransactions(test.db, { limit: 30 })).data).toEqual([]);
+    const recreated = await createTransaction(test.db, notification);
+    expect(recreated.replayed).toBe(false);
+    expect(recreated.data.id).not.toBe(original.data.id);
   });
   it("updates amount and timestamp, then deletes", async () => {
     const { data } = await createTransaction(test.db, payload);

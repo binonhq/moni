@@ -51,7 +51,6 @@ export function TransactionEditor({
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
   const { online } = useDevice();
-  const retry = useRef<{ body: string; key: string } | null>(null);
   const dialogTitle = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (open) {
@@ -61,7 +60,6 @@ export function TransactionEditor({
       setTimestamp(localInput(transaction?.timestamp ?? new Date().toISOString()));
       setError(null);
       setConfirm(false);
-      retry.current = null;
     }
   }, [open, transaction]);
   async function save(event: React.FormEvent) {
@@ -82,15 +80,12 @@ export function TransactionEditor({
     setBusy(true);
     setError(null);
     const body = JSON.stringify(parsed.data);
-    if (retry.current?.body !== body)
-      retry.current = { body, key: `manual-${crypto.randomUUID()}` };
     try {
       await api(
         transaction ? `/api/transactions/${transaction.id}` : "/api/dashboard/transactions",
         {
           method: transaction ? "PATCH" : "POST",
           body,
-          headers: { "Idempotency-Key": retry.current!.key },
         },
       );
       refreshData();
