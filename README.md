@@ -103,13 +103,10 @@ In iPhone Safari: **Share → Add to Home Screen → enable Open as Web App → 
 ### Subsequent deployments
 
 ```powershell
-# Only when new database migrations exist:
-npm run db:migrate
-# Publish the application:
 npx vercel@latest --prod
 ```
 
-Use the existing Vercel project and the existing Neon main database. Do not enable automatic production migrations in every preview build. If you change the canonical domain, update `BETTER_AUTH_URL`, redeploy, and update your Shortcut endpoint.
+Use the existing Vercel project and the existing Neon main database. Vercel runs `npm run db:migrate` before each Production build and stops the deployment if migration fails. Preview builds skip migrations. Migrations must remain compatible with the currently live application because they run before the new deployment is promoted. If you change the canonical domain, update `BETTER_AUTH_URL`, redeploy, and update your Shortcut endpoint.
 
 Official references: [Postgres through Vercel Marketplace](https://vercel.com/docs/postgres), [Vercel deployment CLI](https://vercel.com/docs/cli/deploy), [pulling environment variables](https://vercel.com/docs/cli/env).
 
@@ -127,6 +124,7 @@ For a local browser session, set `BETTER_AUTH_URL=http://127.0.0.1:3000` in the 
 ```text
 npm run dev          Local development, http://127.0.0.1:3000
 npm run build        Optimized production build
+npm run vercel-build Vercel build; migrates only when VERCEL_ENV=production
 npm start            Run the built application locally
 npm run typecheck    Strict TypeScript checking
 npm run format       Format source, tests, scripts, and documentation with Prettier

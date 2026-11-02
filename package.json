@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "next dev --webpack --hostname 127.0.0.1",
     "build": "next build --webpack",
+    "vercel-build": "tsx scripts/vercel-build.ts",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
