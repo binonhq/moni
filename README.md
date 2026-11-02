@@ -158,18 +158,19 @@ Only ingestion accepts the Bearer token. All reads, manual edits, deletes, expor
 | `GET /api/export`                       | Owner session          | Snapshot-consistent CSV                                 |
 | `GET /api/integration`                  | Owner session          | Token status and last use; never token material         |
 | `DELETE /api/integration`               | Owner session + Origin | Revoke current ingestion token                          |
-| `GET /api/assets`                       | Owner session          | Gold portfolio, cached BTMH prices, and checkpoints     |
+| `GET /api/assets/gold`                  | Owner session          | Gold portfolio and cached BTMH prices                   |
+| `GET /api/assets/checkpoints`           | Owner session          | Asset checkpoints                                       |
 | `POST /api/assets/gold`                 | Owner session + Origin | Record a BTMH gold purchase                             |
 | `DELETE /api/assets/gold/:id`           | Owner session + Origin | Remove a recorded gold purchase                         |
 | `GET /api/assets/gold/history?code=KGB` | Owner session          | Cached full available BTMH price archive                |
 | `POST /api/assets/checkpoints`          | Owner session + Origin | Create an immutable timestamped asset snapshot          |
 | `DELETE /api/assets/checkpoints/:id`    | Owner session + Origin | Remove an asset checkpoint                              |
 
-The Assets screen records Bảo Tín Mạnh Hải gold purchases by product, weight in chỉ, total paid,
+The Gold screen (`/gold`) records Bảo Tín Mạnh Hải gold purchases by product, weight in chỉ, total paid,
 and purchase time. Moni fetches the official BTMH GraphQL price list at most once per Vietnam day
 after a successful refresh, stores it in PostgreSQL, and values holdings at BTMH's buy-back price.
 If the source is temporarily unavailable, the latest cached price remains visible and is marked as
-cached. Asset checkpoints contain one or more named VND amounts; their total and creation time are
+cached. The separate Checkpoints screen (`/assets`) contains asset checkpoints with one or more named VND amounts; their total and creation time are
 stored as an immutable snapshot.
 
 The gold history chart requests the full available range from BTMH's `goldChartData` query by

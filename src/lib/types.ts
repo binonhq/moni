@@ -82,4 +82,3 @@ export type AssetCheckpoint = {
   createdAt: string;
   items: AssetCheckpointItem[];
 };
-export type AssetsResponse = { gold: GoldPortfolio; checkpoints: AssetCheckpoint[] };

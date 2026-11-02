@@ -10,3 +10,10 @@ export async function POST(request: Request) {
     return json({ data: checkpoints.find(item => item.id === id) }, 201);
   });
 }
+
+export async function GET(request: Request) {
+  return endpoint(async () => {
+    const { db, userId } = await authorize(request);
+    return json({ data: await listAssetCheckpoints(db, userId) });
+  });
+}

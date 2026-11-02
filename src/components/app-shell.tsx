@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   RefreshCw,
   Landmark,
+  Coins,
 } from "lucide-react";
 import { Brand } from "./brand";
 import { useDevice } from "./providers";
@@ -25,7 +26,8 @@ const tabs = [
   { href: "/", label: "Home", icon: House },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/insights", label: "Insights", icon: ChartNoAxesCombined },
-  { href: "/assets", label: "Assets", icon: Landmark },
+  { href: "/assets", label: "Checkpoints", icon: Landmark },
+  { href: "/gold", label: "Gold", icon: Coins },
   { href: "/settings", label: "Settings", icon: Settings2 },
 ];
 
