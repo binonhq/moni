@@ -58,6 +58,27 @@ export const querySchema = z
     "Minimum exceeds maximum.",
   );
 export const monthSchema = z.string().regex(/^(?:19\d{2}|[2-9]\d{3})-(?:0[1-9]|1[0-2])$/);
+const safeVnd = z
+  .union([z.string(), z.number()])
+  .pipe(z.coerce.number<string | number>().int().nonnegative().max(Number.MAX_SAFE_INTEGER));
+export const goldPurchaseSchema = z
+  .object({
+    productCode: z.string().trim().min(1).max(30),
+    weightMilliChi: z.coerce.number().int().positive().max(1_000_000),
+    purchasePrice: safeVnd.refine(value => value > 0),
+    purchasedAt: timestampSchema,
+  })
+  .strict();
+export const assetCheckpointSchema = z
+  .object({
+    items: z
+      .array(z.object({ name: z.string().trim().min(1).max(80), amount: safeVnd }).strict())
+      .min(1)
+      .max(20),
+  })
+  .strict();
 export type TransactionInput = z.infer<typeof transactionSchema>;
 export type IngestionTransactionInput = z.infer<typeof ingestionTransactionSchema>;
 export type TransactionQuery = z.infer<typeof querySchema>;
+export type GoldPurchaseInput = z.infer<typeof goldPurchaseSchema>;
+export type AssetCheckpointInput = z.infer<typeof assetCheckpointSchema>;
