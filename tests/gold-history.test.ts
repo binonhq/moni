@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { selectGoldHistory, goldHistoryLabel } from "@/lib/gold-history";
+import {
+  goldHistoryStats,
+  goldMonthsAgo,
+  goldPriceExtremes,
+  selectGoldHistory,
+  goldHistoryLabel,
+} from "@/lib/gold-history";
 const points = [
   { date: "2025-12-31", buy: "100", sell: "110" },
   { date: "2026-01-01", buy: "120", sell: "130" },
@@ -30,5 +36,43 @@ describe("gold chart ranges and periods", () => {
     expect(goldHistoryLabel("2026-01-31", "day")).toBe("31/01/2026");
     expect(goldHistoryLabel("2026-01-31", "month")).toBe("01/2026");
     expect(goldHistoryLabel("2026-01-31", "year")).toBe("2026");
+  });
+});
+
+describe("gold price highlights", () => {
+  it("clamps calendar month windows at month end and leap years", () => {
+    expect(goldMonthsAgo("2026-03-31", 1)).toBe("2026-02-28");
+    expect(goldMonthsAgo("2024-03-31", 1)).toBe("2024-02-29");
+    expect(goldMonthsAgo("2026-01-31", 3)).toBe("2025-10-31");
+  });
+  it("computes extremes exactly and chooses the latest date on ties", () => {
+    const values = [
+      { date: "2026-01-01", buy: "9007199254740993", sell: null },
+      { date: "2026-01-02", buy: "9007199254740992", sell: null },
+      { date: "2026-01-03", buy: "9007199254740993", sell: null },
+    ];
+    expect(goldPriceExtremes(values)).toEqual({ high: values[2], low: values[1] });
+    expect(goldPriceExtremes(values.toReversed())).toEqual({ high: values[2], low: values[1] });
+  });
+  it("separates selected, 1-month, 3-month and all-history windows", () => {
+    const values = [
+      { date: "2025-12-31", buy: "999", sell: null },
+      { date: "2026-01-01", buy: "1", sell: null },
+      { date: "2026-02-28", buy: "100", sell: null },
+      { date: "2026-03-15", buy: "500", sell: null },
+      { date: "2026-03-31", buy: "200", sell: null },
+    ];
+    const stats = goldHistoryStats(values.toReversed(), "2026-03-31", "2026-03-31");
+    expect(stats.latest).toEqual(values[4]);
+    expect(stats.periods[0]).toMatchObject({ high: values[4], low: values[4] });
+    expect(stats.periods[1]).toMatchObject({ high: values[3], low: values[2] });
+    expect(stats.periods[2]).toMatchObject({ high: values[0], low: values[1] });
+    expect(stats.periods[3]).toMatchObject({ high: values[0], low: values[1] });
+    expect(goldHistoryStats(values, "2027-01-01").periods[0].high).toBeNull();
+  });
+  it("handles an empty history", () => {
+    const stats = goldHistoryStats([]);
+    expect(stats.latest).toBeUndefined();
+    expect(stats.periods.every(period => period.high === null && period.low === null)).toBe(true);
   });
 });

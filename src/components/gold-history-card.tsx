@@ -4,7 +4,12 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { Coins, RefreshCw } from "lucide-react";
 import type { GoldHistory, GoldPrice } from "@/lib/types";
-import { selectGoldHistory, goldHistoryLabel, type GoldHistoryInterval } from "@/lib/gold-history";
+import {
+  goldHistoryStats,
+  selectGoldHistory,
+  goldHistoryLabel,
+  type GoldHistoryInterval,
+} from "@/lib/gold-history";
 import { money } from "@/lib/utils";
 import { useResource } from "@/hooks/use-resource";
 import { Button } from "./ui/button";
@@ -37,6 +42,10 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
   const points = useMemo(
     () => selectGoldHistory(data?.points ?? [], interval, start, end),
     [data?.points, interval, start, end],
+  );
+  const stats = useMemo(
+    () => goldHistoryStats(data?.points ?? [], start, end),
+    [data?.points, start, end],
   );
   const invalidRange = !!(start && end && start > end);
   return (
@@ -141,6 +150,61 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
               Start date must be on or before end date.
             </p>
           )}
+          <section className="gold-statistics" aria-label="Gold buy-back price statistics">
+            <div className="gold-statistics-heading">
+              <h3>Price highlights · Mua vào</h3>
+              <p>
+                VND / chỉ · Based on available BTMH daily prices.
+                {stats.anchor
+                  ? " Rolling months end on " + goldHistoryLabel(stats.anchor, "day") + "."
+                  : ""}{" "}
+                Equal prices show the most recent date.
+              </p>
+            </div>
+            {stats.latest && (
+              <p className="gold-latest-price">
+                Latest: <strong>{money(stats.latest.buy)}</strong> ·{" "}
+                {goldHistoryLabel(stats.latest.date, "day")}
+                {data.stale ? " · cached" : ""}
+              </p>
+            )}
+            <div className="gold-statistics-grid">
+              {stats.periods.map(period => (
+                <section className="gold-statistic" key={period.label}>
+                  <h4>{period.label}</h4>
+                  <dl>
+                    <div>
+                      <dt>High</dt>
+                      <dd>
+                        {period.high ? (
+                          <>
+                            <strong>{money(period.high.buy)}</strong>
+                            <span>{goldHistoryLabel(period.high.date, "day")}</span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Low</dt>
+                      <dd>
+                        {period.low ? (
+                          <>
+                            <strong>{money(period.low.buy)}</strong>
+                            <span>{goldHistoryLabel(period.low.date, "day")}</span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </dd>
+                    </div>
+                  </dl>
+                  {!period.high && <p>No prices in this range.</p>}
+                </section>
+              ))}
+            </div>
+          </section>
           <div className="gold-chart-meta">
             <span className="gold-chart-legend buy">
               <i /> Mua vào

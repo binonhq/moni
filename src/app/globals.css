@@ -4220,3 +4220,77 @@ input::-webkit-datetime-edit {
     padding-inline: 20px;
   }
 }
+
+.gold-statistics {
+  padding: 4px 26px 20px;
+}
+.gold-statistics-heading h3 {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.gold-statistics-heading p,
+.gold-latest-price {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.gold-latest-price {
+  margin-block: 10px 12px;
+}
+.gold-latest-price strong {
+  color: var(--ink);
+}
+.gold-statistics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.gold-statistic {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+.gold-statistic h4 {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.gold-statistic dl {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+.gold-statistic dt {
+  color: var(--muted);
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+.gold-statistic dd {
+  margin: 0;
+  display: grid;
+  gap: 3px;
+}
+.gold-statistic dd strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.gold-statistic dd span,
+.gold-statistic p {
+  color: var(--muted);
+  font-size: 10px;
+}
+@media (max-width: 1000px) {
+  .gold-statistics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .gold-statistics {
+    padding-inline: 20px;
+  }
+}
+@media (max-width: 380px) {
+  .gold-statistics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
