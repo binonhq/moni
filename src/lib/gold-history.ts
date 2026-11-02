@@ -81,3 +81,13 @@ export function goldHistoryStats(points: GoldHistoryPoint[], start = "", end = "
     ],
   };
 }
+
+export type GoldHistoryView = "all" | "year" | "month";
+export function selectGoldHistoryView(points: GoldHistoryPoint[], view: GoldHistoryView) {
+  const daily = selectGoldHistory(points, "day");
+  const latest = daily.at(-1);
+  if (!latest || view === "all") return daily;
+  const start = new Date(latest.date + "T00:00:00Z");
+  start.setUTCDate(start.getUTCDate() - ((view === "year" ? 365 : 30) - 1));
+  return selectGoldHistory(daily, "day", start.toISOString().slice(0, 10), latest.date);
+}

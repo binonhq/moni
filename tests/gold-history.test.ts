@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  selectGoldHistoryView,
   goldHistoryStats,
   goldMonthsAgo,
   goldPriceExtremes,
@@ -74,5 +75,29 @@ describe("gold price highlights", () => {
     const stats = goldHistoryStats([]);
     expect(stats.latest).toBeUndefined();
     expect(stats.periods.every(period => period.high === null && period.low === null)).toBe(true);
+  });
+});
+
+describe("gold daily chart views", () => {
+  const daily = Array.from({ length: 400 }, (_, index) => {
+    const date = new Date("2024-01-01T00:00:00Z");
+    date.setUTCDate(date.getUTCDate() + index);
+    return { date: date.toISOString().slice(0, 10), buy: String(100 + index), sell: null };
+  });
+  it("keeps all daily points for All time without modifying input", () => {
+    const reversed = daily.toReversed();
+    expect(selectGoldHistoryView(reversed, "all")).toEqual(daily);
+    expect(reversed[0]).toEqual(daily.at(-1));
+  });
+  it("keeps exactly 30 calendar days including the latest day", () => {
+    expect(selectGoldHistoryView(daily, "month")).toEqual(daily.slice(-30));
+  });
+  it("keeps exactly 365 days across a leap year without aggregating", () => {
+    expect(selectGoldHistoryView(daily, "year")).toEqual(daily.slice(-365));
+  });
+  it("uses calendar days rather than the number of source records", () => {
+    const sparse = [daily[0], daily[365], daily[370], daily[399]];
+    expect(selectGoldHistoryView(sparse, "month")).toEqual([daily[370], daily[399]]);
+    expect(selectGoldHistoryView([], "year")).toEqual([]);
   });
 });

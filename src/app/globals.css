@@ -4144,7 +4144,7 @@ input::-webkit-datetime-edit {
 
 .gold-history-filters {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: minmax(0, 260px);
   align-items: end;
   gap: 12px;
   padding-inline: 26px;
@@ -4292,5 +4292,18 @@ input::-webkit-datetime-edit {
 @media (max-width: 380px) {
   .gold-statistics-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.gold-view-note {
+  padding-inline: 26px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 700px) {
+  .gold-view-note {
+    padding-inline: 20px;
   }
 }

@@ -173,9 +173,9 @@ If the source is temporarily unavailable, the latest cached price remains visibl
 cached. The separate Checkpoints screen (`/assets`) contains asset checkpoints with one or more named VND amounts; their total and creation time are
 stored as an immutable snapshot.
 
-The gold chart supports daily, monthly, and yearly views with an inclusive custom date range.
-Monthly and yearly views use the last available price within each selected period; the exact
-price date appears in the tooltip and table. All time clears the date filters.
+The gold chart shows individual daily prices in three views: All time, Year (365 days), and
+Month (30 days). Rolling windows include the latest available price date and keep each daily
+point without monthly or yearly aggregation.
 
 The gold history chart requests the full available range from BTMH's `goldChartData` query by
 supplying explicit `from_date` and `to_date` values. BTMH currently returns records from late 2021

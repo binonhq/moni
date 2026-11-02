@@ -6,9 +6,9 @@ import { Coins, RefreshCw } from "lucide-react";
 import type { GoldHistory, GoldPrice } from "@/lib/types";
 import {
   goldHistoryStats,
-  selectGoldHistory,
+  selectGoldHistoryView,
   goldHistoryLabel,
-  type GoldHistoryInterval,
+  type GoldHistoryView,
 } from "@/lib/gold-history";
 import { money } from "@/lib/utils";
 import { useResource } from "@/hooks/use-resource";
@@ -27,9 +27,7 @@ const KGB_FALLBACK: GoldPrice = {
 
 export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
   const [productCode, setProductCode] = useState("KGB");
-  const [interval, setInterval] = useState<GoldHistoryInterval>("day");
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const [view, setView] = useState<GoldHistoryView>("all");
   const [tableOpen, setTableOpen] = useState(false);
   const options = useMemo(
     () => (prices.some(price => price.productCode === "KGB") ? prices : [KGB_FALLBACK, ...prices]),
@@ -40,14 +38,13 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
   );
   const data = history.data?.data;
   const points = useMemo(
-    () => selectGoldHistory(data?.points ?? [], interval, start, end),
-    [data?.points, interval, start, end],
+    () => selectGoldHistoryView(data?.points ?? [], view),
+    [data?.points, view],
   );
   const stats = useMemo(
-    () => goldHistoryStats(data?.points ?? [], start, end),
-    [data?.points, start, end],
+    () => goldHistoryStats(data?.points ?? [], points[0]?.date ?? "", points.at(-1)?.date ?? ""),
+    [data?.points, points],
   );
-  const invalidRange = !!(start && end && start > end);
   return (
     <section className="panel gold-history-panel">
       <div className="panel-heading gold-history-heading">
@@ -92,64 +89,27 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
       ) : data ? (
         <>
           <div className="gold-history-filters">
-            <label htmlFor="gold-history-interval">
+            <label htmlFor="gold-history-view">
               View by
               <select
-                id="gold-history-interval"
-                value={interval}
-                onChange={event => setInterval(event.target.value as GoldHistoryInterval)}
+                id="gold-history-view"
+                value={view}
+                onChange={event => setView(event.target.value as GoldHistoryView)}
               >
-                <option value="day">Day</option>
-                <option value="month">Month</option>
-                <option value="year">Year</option>
+                <option value="all">All time</option>
+                <option value="year">Year · 365 days</option>
+                <option value="month">Month · 30 days</option>
               </select>
             </label>
-            <label htmlFor="gold-history-start">
-              From
-              <input
-                id="gold-history-start"
-                type="date"
-                value={start}
-                min={data.rangeStart}
-                max={end || data.rangeEnd}
-                onChange={event => setStart(event.target.value)}
-                aria-invalid={invalidRange}
-              />
-            </label>
-            <label htmlFor="gold-history-end">
-              To
-              <input
-                id="gold-history-end"
-                type="date"
-                value={end}
-                min={start || data.rangeStart}
-                max={data.rangeEnd}
-                onChange={event => setEnd(event.target.value)}
-                aria-invalid={invalidRange}
-              />
-            </label>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setStart("");
-                setEnd("");
-              }}
-              disabled={!start && !end}
-            >
-              All time
-            </Button>
           </div>
-          {interval !== "day" && (
-            <p className="muted">
-              Last available price in each {interval} within the selected range.
-            </p>
-          )}
-          {invalidRange && (
-            <p className="form-error" role="alert">
-              Start date must be on or before end date.
-            </p>
-          )}
+          <p className="gold-view-note">
+            Daily prices ·{" "}
+            {view === "all"
+              ? "Entire available history"
+              : (view === "year" ? "Last 365 days" : "Last 30 days") +
+                " ending on the latest available price date"}
+            .
+          </p>
           <section className="gold-statistics" aria-label="Gold buy-back price statistics">
             <div className="gold-statistics-heading">
               <h3>Price highlights · Mua vào</h3>
@@ -171,7 +131,7 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
             <div className="gold-statistics-grid">
               {stats.periods.map(period => (
                 <section className="gold-statistic" key={period.label}>
-                  <h4>{period.label}</h4>
+                  <h4>{period.label === "Selected range" ? "Current view" : period.label}</h4>
                   <dl>
                     <div>
                       <dt>High</dt>
@@ -215,16 +175,15 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
               </span>
             ) : null}
             <span className="gold-chart-count">
-              {points.length}{" "}
-              {interval === "day" ? "daily" : interval === "month" ? "monthly" : "yearly"} points
+              {points.length} daily points
               {data.stale ? " · cached" : ""}
             </span>
           </div>
           {points.length ? (
-            <GoldHistoryChart points={points} interval={interval} />
+            <GoldHistoryChart points={points} interval="day" />
           ) : (
             <p className="gold-history-empty" role="status">
-              No prices in this date range. Choose another range or select All time.
+              No prices available for this view.
             </p>
           )}
           <details
@@ -237,7 +196,7 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
                 <table>
                   <thead>
                     <tr>
-                      <th>Period / price date</th>
+                      <th>Date</th>
                       <th>Mua vào</th>
                       <th>Bán ra</th>
                     </tr>
@@ -245,12 +204,7 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
                   <tbody>
                     {points.map((point, index) => (
                       <tr key={`${point.date}-${index}`}>
-                        <td>
-                          {goldHistoryLabel(point.date, interval)}
-                          {interval !== "day" && (
-                            <small> · {goldHistoryLabel(point.date, "day")}</small>
-                          )}
-                        </td>
+                        <td>{goldHistoryLabel(point.date, "day")}</td>
                         <td>{money(point.buy)}</td>
                         <td>{point.sell ? money(point.sell) : "—"}</td>
                       </tr>
