@@ -1,155 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Check, Landmark, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import { CalendarDays, Landmark, Trash2 } from "lucide-react";
 import { useResource, api, refreshData } from "@/hooks/use-resource";
 import type { AssetCheckpoint } from "@/lib/types";
 import { displayDate } from "@/lib/dates";
 import { money } from "@/lib/utils";
 import { PageHeading, EmptyState, ErrorNotice, Skeleton } from "./common";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "./ui/dialog";
 import { Confirm } from "./ui/confirm";
-import { MoneyInput } from "./money-input";
-
-type CheckpointDraft = { name: string; amount: string };
-function CheckpointDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const [items, setItems] = useState<CheckpointDraft[]>([{ name: "", amount: "0" }]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const title = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    if (open) {
-      setItems([{ name: "", amount: "0" }]);
-      setError(null);
-    }
-  }, [open]);
-  const total = useMemo(
-    () =>
-      items.reduce((sum, item) => sum + (/^\d+$/.test(item.amount) ? BigInt(item.amount) : 0n), 0n),
-    [items],
-  );
-  const update = (index: number, patch: Partial<CheckpointDraft>) =>
-    setItems(current =>
-      current.map((item, position) => (position === index ? { ...item, ...patch } : item)),
-    );
-  async function save(event: React.FormEvent) {
-    event.preventDefault();
-    if (items.some(item => !item.name.trim() || !/^\d+$/.test(item.amount))) {
-      setError("Give every asset a name and a valid amount.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await api("/api/assets/checkpoints", { method: "POST", body: JSON.stringify({ items }) });
-      refreshData();
-      onOpenChange(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create this checkpoint.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <Dialog open={open} onOpenChange={value => !busy && onOpenChange(value)}>
-      <DialogContent
-        className="checkpoint-dialog"
-        onOpenAutoFocus={event => {
-          event.preventDefault();
-          title.current?.focus({ preventScroll: true });
-        }}
-      >
-        <span className="dialog-symbol">
-          <Landmark size={24} />
-        </span>
-        <DialogTitle ref={title} tabIndex={-1} className="dialog-title">
-          Create an asset checkpoint
-        </DialogTitle>
-        <DialogDescription className="muted">
-          A timestamped snapshot that stays unchanged.
-        </DialogDescription>
-        <form className="expense-form" onSubmit={save}>
-          <div className="dialog-actions modal-top-actions">
-            <Button type="submit" disabled={busy}>
-              {busy ? <LoaderCircle size={18} className="spin" /> : <Check size={18} />} Create
-              checkpoint
-            </Button>
-          </div>
-          <div className="checkpoint-drafts">
-            {items.map((item, index) => (
-              <div className="checkpoint-draft" key={index}>
-                <label htmlFor={`checkpoint-name-${index}`}>Asset name</label>
-                <input
-                  id={`checkpoint-name-${index}`}
-                  value={item.name}
-                  onChange={e => update(index, { name: e.target.value })}
-                  maxLength={80}
-                  placeholder="Savings account"
-                  disabled={busy}
-                />
-                <label htmlFor={`checkpoint-amount-${index}`}>Amount</label>
-                <div className="checkpoint-amount-row">
-                  <div className="amount-input-wrap">
-                    <MoneyInput
-                      id={`checkpoint-amount-${index}`}
-                      value={item.amount}
-                      onValueChange={amount => update(index, { amount })}
-                      disabled={busy}
-                    />
-                    <span>₫</span>
-                  </div>
-                  {items.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Remove ${item.name || "asset"}`}
-                      onClick={() =>
-                        setItems(current => current.filter((_, position) => position !== index))
-                      }
-                      disabled={busy}
-                    >
-                      <Trash2 size={18} />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setItems(current => [...current, { name: "", amount: "0" }])}
-            disabled={busy || items.length >= 20}
-          >
-            <Plus size={17} /> Add another asset
-          </Button>
-          <div className="checkpoint-total">
-            <span>Total assets</span>
-            <strong>{money(total)}</strong>
-          </div>
-          {error && (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
-          )}
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export function AssetsScreen() {
   const resource = useResource<{ data: AssetCheckpoint[] }>("/api/assets/checkpoints");
   const data = resource.data?.data;
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
@@ -175,8 +39,10 @@ export function AssetsScreen() {
         title="Your asset checkpoints."
         description="Keep timestamped snapshots of everything you own."
       >
-        <Button onClick={() => setDialogOpen(true)}>
-          <Landmark size={18} /> New checkpoint
+        <Button asChild>
+          <Link href="/assets/new">
+            <Landmark size={18} /> New checkpoint
+          </Link>
         </Button>
       </PageHeading>
       {resource.error && <ErrorNotice message={resource.error} retry={resource.refresh} />}
@@ -261,7 +127,6 @@ export function AssetsScreen() {
           </section>
         </>
       )}
-      <CheckpointDialog open={dialogOpen} onOpenChange={setDialogOpen} />
       <Confirm
         open={!!deleting}
         onOpenChange={open => !open && setDeleting(null)}

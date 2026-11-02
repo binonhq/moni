@@ -22,6 +22,8 @@ import { cn } from "@/lib/utils";
 import { AddTransaction } from "./transaction-editor";
 import { Button } from "./ui/button";
 import { refreshData, useRefreshing } from "@/hooks/use-resource";
+const isActive = (path: string, href: string) =>
+  path === href || (href !== "/" && path.startsWith(`${href}/`));
 const tabs = [
   { href: "/", label: "Home", icon: House },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
@@ -118,10 +120,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               key={href}
               href={href}
-              className={cn("desktop-nav-item", path === href && "active")}
-              aria-current={path === href ? "page" : undefined}
+              className={cn("desktop-nav-item", isActive(path, href) && "active")}
+              aria-current={isActive(path, href) ? "page" : undefined}
             >
-              {path === href && (
+              {isActive(path, href) && (
                 <motion.span
                   className="desktop-nav-active"
                   layoutId="desktop-nav-active"
@@ -130,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
               <Icon size={20} strokeWidth={1.8} />
               <span>{label}</span>
-              {path === href && <span className="nav-dot" />}
+              {isActive(path, href) && <span className="nav-dot" />}
             </Link>
           ))}
         </nav>
@@ -154,7 +156,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Brand />
           </Link>
           <div className="desktop-breadcrumb">
-            Your space <span>/</span> {tabs.find(t => t.href === path)?.label ?? "Shortcuts guide"}
+            Your space <span>/</span>{" "}
+            {tabs.find(t => isActive(path, t.href))?.label ?? "Shortcuts guide"}
           </div>
           <div className="topbar-actions">
             <span className="private-badge">
@@ -187,18 +190,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             key={href}
             href={href}
-            aria-current={path === href ? "page" : undefined}
-            className={cn("bottom-nav-item", path === href && "active")}
+            aria-current={isActive(path, href) ? "page" : undefined}
+            className={cn("bottom-nav-item", isActive(path, href) && "active")}
           >
             <span className="nav-icon">
-              {path === href && (
+              {isActive(path, href) && (
                 <motion.span
                   className="bottom-nav-active"
                   layoutId="bottom-nav-active"
                   transition={{ type: "spring", stiffness: 420, damping: 36 }}
                 />
               )}
-              <Icon size={22} strokeWidth={path === href ? 2.2 : 1.7} />
+              <Icon size={22} strokeWidth={isActive(path, href) ? 2.2 : 1.7} />
             </span>
             <span>{label}</span>
           </Link>

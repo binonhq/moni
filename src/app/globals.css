@@ -4143,15 +4143,15 @@ input::-webkit-datetime-edit {
 }
 
 .gold-history-filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   align-items: end;
   gap: 12px;
+  padding-inline: 26px;
   margin-bottom: 16px;
 }
 .gold-history-filters label {
   display: flex;
-  flex: 1 1 150px;
   min-width: 0;
   flex-direction: column;
   gap: 6px;
@@ -4167,10 +4167,56 @@ input::-webkit-datetime-edit {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
-  color: var(--text);
+  color: var(--ink);
 }
 .gold-history-empty {
   padding: 48px 16px;
   text-align: center;
   color: var(--muted);
+}
+
+.checkpoint-create-panel {
+  max-width: 760px;
+  padding: clamp(18px, 4vw, 32px);
+}
+
+.gold-history-filters > * {
+  min-width: 0;
+}
+.gold-history-filters input {
+  display: block;
+  max-width: 100%;
+  min-inline-size: 0;
+}
+.gold-history-filters + .muted,
+.gold-history-filters ~ .form-error {
+  padding-inline: 26px;
+  margin-bottom: 12px;
+}
+@media (max-width: 700px) {
+  .gold-history-filters {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 20px;
+    gap: 14px;
+  }
+  .gold-history-filters label {
+    width: 100%;
+  }
+  .gold-history-filters input,
+  .gold-history-filters select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .gold-history-filters input::-webkit-date-and-time-value {
+    text-align: left;
+    min-width: 0;
+  }
+  .gold-history-filters > .button {
+    width: 100%;
+    min-height: 44px;
+  }
+  .gold-history-filters + .muted,
+  .gold-history-filters ~ .form-error {
+    padding-inline: 20px;
+  }
 }
