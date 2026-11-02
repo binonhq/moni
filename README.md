@@ -144,20 +144,38 @@ Webpack is selected explicitly because the Turbopack CSS worker failed on the or
 
 Only ingestion accepts the Bearer token. All reads, manual edits, deletes, exports, integration management, and dashboard manual entry require an authenticated owner session. Browser mutations require an exact trusted Origin in addition to session cookies.
 
-| Endpoint                           | Authentication         | Behavior                                                |
-| ---------------------------------- | ---------------------- | ------------------------------------------------------- |
-| `POST /api/transactions`           | Ingestion Bearer token | Create an expense                                       |
-| `GET /api/transactions`            | Owner session          | Keyset-paginated history                                |
-| `PATCH /api/transactions/:id`      | Owner session + Origin | Edit amount, timestamp, title, or category              |
-| `GET /api/categories`              | Owner session          | List categories and icon keys                           |
-| `POST /api/categories`             | Owner session + Origin | Create a category with a name and icon                  |
-| `DELETE /api/categories/:id`       | Owner session + Origin | Remove a category; linked expenses become Uncategorized |
-| `DELETE /api/transactions/:id`     | Owner session + Origin | Delete one expense                                      |
-| `POST /api/dashboard/transactions` | Owner session + Origin | Manual entry from the app                               |
-| `GET /api/stats?month=2026-10`     | Owner session          | Vietnam-local reports                                   |
-| `GET /api/export`                  | Owner session          | Snapshot-consistent CSV                                 |
-| `GET /api/integration`             | Owner session          | Token status and last use; never token material         |
-| `DELETE /api/integration`          | Owner session + Origin | Revoke current ingestion token                          |
+| Endpoint                                | Authentication         | Behavior                                                |
+| --------------------------------------- | ---------------------- | ------------------------------------------------------- |
+| `POST /api/transactions`                | Ingestion Bearer token | Create an expense                                       |
+| `GET /api/transactions`                 | Owner session          | Keyset-paginated history                                |
+| `PATCH /api/transactions/:id`           | Owner session + Origin | Edit amount, timestamp, title, or category              |
+| `GET /api/categories`                   | Owner session          | List categories and icon keys                           |
+| `POST /api/categories`                  | Owner session + Origin | Create a category with a name and icon                  |
+| `DELETE /api/categories/:id`            | Owner session + Origin | Remove a category; linked expenses become Uncategorized |
+| `DELETE /api/transactions/:id`          | Owner session + Origin | Delete one expense                                      |
+| `POST /api/dashboard/transactions`      | Owner session + Origin | Manual entry from the app                               |
+| `GET /api/stats?month=2026-10`          | Owner session          | Vietnam-local reports                                   |
+| `GET /api/export`                       | Owner session          | Snapshot-consistent CSV                                 |
+| `GET /api/integration`                  | Owner session          | Token status and last use; never token material         |
+| `DELETE /api/integration`               | Owner session + Origin | Revoke current ingestion token                          |
+| `GET /api/assets`                       | Owner session          | Gold portfolio, cached BTMH prices, and checkpoints     |
+| `POST /api/assets/gold`                 | Owner session + Origin | Record a BTMH gold purchase                             |
+| `DELETE /api/assets/gold/:id`           | Owner session + Origin | Remove a recorded gold purchase                         |
+| `GET /api/assets/gold/history?code=KGB` | Owner session          | Cached full available BTMH price archive                |
+| `POST /api/assets/checkpoints`          | Owner session + Origin | Create an immutable timestamped asset snapshot          |
+| `DELETE /api/assets/checkpoints/:id`    | Owner session + Origin | Remove an asset checkpoint                              |
+
+The Assets screen records Bảo Tín Mạnh Hải gold purchases by product, weight in chỉ, total paid,
+and purchase time. Moni fetches the official BTMH GraphQL price list at most once per Vietnam day
+after a successful refresh, stores it in PostgreSQL, and values holdings at BTMH's buy-back price.
+If the source is temporarily unavailable, the latest cached price remains visible and is marked as
+cached. Asset checkpoints contain one or more named VND amounts; their total and creation time are
+stored as an immutable snapshot.
+
+The gold history chart requests the full available range from BTMH's `goldChartData` query by
+supplying explicit `from_date` and `to_date` values. BTMH currently returns records from late 2021
+onward. History is cached independently per product for the Vietnam day, with the last successful
+snapshot used when the upstream service is temporarily unavailable.
 
 The ingestion body is strictly:
 

@@ -13,6 +13,7 @@ import {
   WifiOff,
   ArrowUpRight,
   RefreshCw,
+  Landmark,
 } from "lucide-react";
 import { Brand } from "./brand";
 import { useDevice } from "./providers";
@@ -24,6 +25,7 @@ const tabs = [
   { href: "/", label: "Home", icon: House },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/insights", label: "Insights", icon: ChartNoAxesCombined },
+  { href: "/assets", label: "Assets", icon: Landmark },
   { href: "/settings", label: "Settings", icon: Settings2 },
 ];
 

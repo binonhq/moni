@@ -7,6 +7,8 @@ import {
   integer,
   bigint,
   uuid,
+  date,
+  jsonb,
   index,
   uniqueIndex,
   check,
@@ -125,4 +127,85 @@ export const rateBuckets = pgTable(
     resetAt: instant("reset_at").notNull(),
   },
   t => [index("rate_buckets_reset_idx").on(t.resetAt)],
+);
+
+export const goldPrices = pgTable(
+  "gold_prices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    priceDate: date("price_date", { mode: "string" }).notNull(),
+    productCode: text("product_code").notNull(),
+    productName: text("product_name").notNull(),
+    buyPrice: bigint("buy_price", { mode: "bigint" }).notNull(),
+    sellPrice: bigint("sell_price", { mode: "bigint" }).notNull(),
+    fetchedAt: instant("fetched_at").notNull().defaultNow(),
+  },
+  t => [
+    uniqueIndex("gold_prices_date_product_unique").on(t.priceDate, t.productCode),
+    index("gold_prices_date_idx").on(t.priceDate.desc()),
+    check("gold_prices_positive", sql`${t.buyPrice} > 0 AND ${t.sellPrice} > 0`),
+  ],
+);
+
+export const goldPurchases = pgTable(
+  "gold_purchases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+    productCode: text("product_code").notNull(),
+    productName: text("product_name").notNull(),
+    weightMilliChi: integer("weight_milli_chi").notNull(),
+    purchasePrice: bigint("purchase_price", { mode: "bigint" }).notNull(),
+    purchasedAt: instant("purchased_at").notNull(),
+    createdAt: instant("created_at").notNull().defaultNow(),
+  },
+  t => [
+    index("gold_purchases_user_date_idx").on(t.userId, t.purchasedAt.desc()),
+    check("gold_purchase_weight_positive", sql`${t.weightMilliChi} > 0`),
+    check(
+      "gold_purchase_price_positive",
+      sql`${t.purchasePrice} > 0 AND ${t.purchasePrice} <= 9007199254740991`,
+    ),
+  ],
+);
+
+export const goldHistoryCache = pgTable("gold_history_cache", {
+  productCode: text("product_code").primaryKey(),
+  productName: text("product_name").notNull(),
+  points: jsonb("points")
+    .$type<Array<{ date: string; buy: string; sell: string | null }>>()
+    .notNull(),
+  fetchedAt: instant("fetched_at").notNull().defaultNow(),
+});
+
+export const assetCheckpoints = pgTable(
+  "asset_checkpoints",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+    total: bigint("total", { mode: "bigint" }).notNull(),
+    createdAt: instant("created_at").notNull().defaultNow(),
+  },
+  t => [
+    index("asset_checkpoints_user_date_idx").on(t.userId, t.createdAt.desc()),
+    check("asset_checkpoint_total_nonnegative", sql`${t.total} >= 0`),
+  ],
+);
+
+export const assetCheckpointItems = pgTable(
+  "asset_checkpoint_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    checkpointId: uuid("checkpoint_id")
+      .notNull()
+      .references(() => assetCheckpoints.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    position: integer("position").notNull(),
+  },
+  t => [
+    index("asset_checkpoint_items_checkpoint_idx").on(t.checkpointId, t.position),
+    check("asset_checkpoint_item_name_length", sql`length(trim(${t.name})) BETWEEN 1 AND 80`),
+    check("asset_checkpoint_item_amount_nonnegative", sql`${t.amount} >= 0`),
+  ],
 );
