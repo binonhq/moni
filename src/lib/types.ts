@@ -75,10 +75,20 @@ export type GoldHistory = {
   stale: boolean;
   points: GoldHistoryPoint[];
 };
-export type AssetCheckpointItem = { id: string; name: string; amount: string };
+export type AssetCheckpointItem = {
+  id: string;
+  name: string;
+  amount: string;
+  weightMilliChi?: number | null;
+  productName?: string | null;
+  buyPrice?: string | null;
+  priceDate?: string | null;
+};
 export type AssetCheckpoint = {
   id: string;
   total: string;
   createdAt: string;
   items: AssetCheckpointItem[];
 };
+
+export type AssetCategory = { id: string; name: string; unit: "vnd" | "chi" };

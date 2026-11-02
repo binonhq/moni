@@ -173,6 +173,15 @@ If the source is temporarily unavailable, the latest cached price remains visibl
 cached. The separate Checkpoints screen (`/assets`) contains asset checkpoints with one or more named VND amounts; their total and creation time are
 stored as an immutable snapshot.
 
+Checkpoint asset names are managed separately from expense categories. Open Manage asset categories
+on the creation page to add, rename, change units, or delete them. Each account starts with
+Tiết kiệm (VND), Banking (VND), and Vàng (chỉ); deleting a default does not recreate it.
+Gold rows require a BTMH product and weight in chỉ (up to three decimals). The server converts
+weight to VND using its latest available buy-back price, and saves the weight, product, price,
+and price date with the snapshot. Later category or market-price changes leave saved snapshots unchanged.
+Asset categories use session-authenticated GET/POST at `/api/assets/categories` and PATCH/DELETE
+at `/api/assets/categories/:id`. Mutations also require the trusted browser Origin.
+
 The gold chart shows individual daily prices in three views: All time, Year (365 days), and
 Month (30 days). Rolling windows include the latest available price date and keep each daily
 point without monthly or yearly aggregation.

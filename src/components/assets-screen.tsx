@@ -110,7 +110,17 @@ export function AssetsScreen() {
                     <div className="checkpoint-items">
                       {checkpoint.items.map(item => (
                         <div key={item.id}>
-                          <span>{item.name}</span>
+                          <span>
+                            {item.name}
+                            {item.weightMilliChi != null && (
+                              <small className="checkpoint-gold-detail">
+                                {new Intl.NumberFormat("vi-VN", {
+                                  maximumFractionDigits: 3,
+                                }).format(item.weightMilliChi / 1000)}{" "}
+                                chỉ · {item.productName} · giá {item.priceDate}
+                              </small>
+                            )}
+                          </span>
                           <strong>{money(item.amount)}</strong>
                         </div>
                       ))}

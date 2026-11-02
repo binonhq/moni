@@ -202,10 +202,37 @@ export const assetCheckpointItems = pgTable(
     name: text("name").notNull(),
     amount: bigint("amount", { mode: "bigint" }).notNull(),
     position: integer("position").notNull(),
+    weightMilliChi: integer("weight_milli_chi"),
+    productCode: text("product_code"),
+    productName: text("product_name"),
+    buyPrice: bigint("buy_price", { mode: "bigint" }),
+    priceDate: date("price_date", { mode: "string" }),
   },
   t => [
     index("asset_checkpoint_items_checkpoint_idx").on(t.checkpointId, t.position),
     check("asset_checkpoint_item_name_length", sql`length(trim(${t.name})) BETWEEN 1 AND 80`),
     check("asset_checkpoint_item_amount_nonnegative", sql`${t.amount} >= 0`),
+  ],
+);
+
+export const assetCategorySets = pgTable("asset_category_sets", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+export const assetCategories = pgTable(
+  "asset_categories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    unit: text("unit").$type<"vnd" | "chi">().notNull().default("vnd"),
+  },
+  t => [
+    uniqueIndex("asset_categories_user_name_unique").on(t.userId, sql`lower(${t.name})`),
+    check("asset_category_name_length", sql`length(trim(${t.name})) BETWEEN 1 AND 80`),
+    check("asset_category_unit", sql`${t.unit} IN ('vnd', 'chi')`),
   ],
 );

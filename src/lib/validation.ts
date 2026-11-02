@@ -72,7 +72,19 @@ export const goldPurchaseSchema = z
 export const assetCheckpointSchema = z
   .object({
     items: z
-      .array(z.object({ name: z.string().trim().min(1).max(80), amount: safeVnd }).strict())
+      .array(
+        z.union([
+          z.object({ categoryId: z.uuid(), amount: safeVnd }).strict(),
+          z
+            .object({
+              categoryId: z.uuid(),
+              productCode: z.string().trim().min(1).max(30),
+              weightMilliChi: z.number().int().positive().max(1_000_000),
+            })
+            .strict(),
+          z.object({ name: z.string().trim().min(1).max(80), amount: safeVnd }).strict(),
+        ]),
+      )
       .min(1)
       .max(20),
   })
@@ -82,3 +94,7 @@ export type IngestionTransactionInput = z.infer<typeof ingestionTransactionSchem
 export type TransactionQuery = z.infer<typeof querySchema>;
 export type GoldPurchaseInput = z.infer<typeof goldPurchaseSchema>;
 export type AssetCheckpointInput = z.infer<typeof assetCheckpointSchema>;
+
+export const assetCategorySchema = z
+  .object({ name: z.string().trim().min(1).max(80), unit: z.enum(["vnd", "chi"]) })
+  .strict();

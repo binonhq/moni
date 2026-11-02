@@ -4307,3 +4307,48 @@ input::-webkit-datetime-edit {
     padding-inline: 20px;
   }
 }
+
+.asset-category-manager {
+  max-width: 760px;
+  margin-top: 20px;
+  padding: clamp(18px, 4vw, 32px);
+}
+.asset-category-manager summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.asset-category-manager > p {
+  margin-block: 12px;
+  font-size: 12px;
+}
+.asset-category-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 18px;
+}
+.asset-category-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-block: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.asset-category-list li > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.asset-category-list small,
+.checkpoint-gold-detail {
+  color: var(--muted);
+  font-size: 11px;
+}
+.checkpoint-gold-detail {
+  display: block;
+  margin-top: 5px;
+}
+.checkpoint-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
