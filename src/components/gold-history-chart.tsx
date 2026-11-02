@@ -12,14 +12,21 @@ import {
   YAxis,
 } from "recharts";
 import type { GoldHistoryPoint } from "@/lib/types";
+import { goldHistoryLabel, type GoldHistoryInterval } from "@/lib/gold-history";
 import { money, shortMoney } from "@/lib/utils";
 
-export default function GoldHistoryChart({ points }: { points: GoldHistoryPoint[] }) {
+export default function GoldHistoryChart({
+  points,
+  interval,
+}: {
+  points: GoldHistoryPoint[];
+  interval: GoldHistoryInterval;
+}) {
   const gradientId = useId().replace(/:/g, "");
   const reducedMotion = useReducedMotion();
   const data = points.map(point => ({
     ...point,
-    label: `${point.date.slice(8, 10)}/${point.date.slice(5, 7)}/${point.date.slice(2, 4)}`,
+    label: goldHistoryLabel(point.date, interval),
     buyValue: Number(point.buy),
     sellValue: point.sell ? Number(point.sell) : null,
   }));
@@ -59,7 +66,12 @@ export default function GoldHistoryChart({ points }: { points: GoldHistoryPoint[
             content={({ active, payload }) =>
               active && payload?.length ? (
                 <div className="chart-tooltip gold-chart-tooltip">
-                  <span>{String(payload[0].payload.label)}</span>
+                  <span>
+                    {String(payload[0].payload.label)}
+                    {interval !== "day"
+                      ? ` · ${goldHistoryLabel(String(payload[0].payload.date), "day")}`
+                      : ""}
+                  </span>
                   <strong>Mua vào · {money(String(payload[0].payload.buy))}</strong>
                   {payload[0].payload.sell ? (
                     <strong>Bán ra · {money(String(payload[0].payload.sell))}</strong>
