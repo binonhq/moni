@@ -2,6 +2,10 @@
 
 A private, single-owner expense tracker built for iPhone. Next.js App Router, TypeScript, Tailwind CSS, shadcn-style Radix primitives, Lucide, Motion, Recharts, Better Auth, Drizzle, and Neon PostgreSQL. The application receives structured transactions from iOS Shortcuts; it never parses bank notifications.
 
+## Repository workflow
+
+Use a dedicated branch for documentation and application changes, then open a pull request targeting `main`. Review the changes before merging. Never commit `.env.local`, production credentials, or ingestion tokens.
+
 ## Deploy directly to Vercel — one database
 
 Use **one Neon PostgreSQL database created through Vercel Storage / Marketplace**. That same database stores expenses, the owner account, sessions, token hashes, notification fingerprints, and rate limits. There is no Redis requirement, second database, separate local database, or mandatory preview branch. PGlite is used only by disposable automated tests.
