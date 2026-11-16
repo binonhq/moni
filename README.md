@@ -2,6 +2,10 @@
 
 A private, single-owner expense tracker built for iPhone. Next.js App Router, TypeScript, Tailwind CSS, shadcn-style Radix primitives, Lucide, Motion, Recharts, Better Auth, Drizzle, and Neon PostgreSQL. The application receives structured transactions from iOS Shortcuts; it never parses bank notifications.
 
+## Repository workflow
+
+Use a dedicated branch for documentation and application changes, then open a pull request targeting `main`. Review the changes before merging. Never commit `.env.local`, production credentials, or ingestion tokens.
+
 ## Deploy directly to Vercel — one database
 
 Use **one Neon PostgreSQL database created through Vercel Storage / Marketplace**. That same database stores expenses, the owner account, sessions, token hashes, notification fingerprints, and rate limits. There is no Redis requirement, second database, separate local database, or mandatory preview branch. PGlite is used only by disposable automated tests.
@@ -66,7 +70,7 @@ npm run setup:user
 
 Local and Production intentionally use the same Neon database. Keep `DATABASE_URL` and `DATABASE_URL_UNPOOLED` as pulled; only change the local `BETTER_AUTH_URL` to `http://localhost:3000` so local sign-in uses the local origin.
 
-The account command prompts for an email and a password of at least 13 characters. The password input is masked. Signup is disabled in the deployed app; a database uniqueness constraint also prevents a second owner. Do not put `MONI_SETUP_PASSWORD` in Vercel. The optional setup variables in `.env.example` are for unattended trusted local setup only.
+The account command prompts for an email and a password of at least 13 characters. The password input is masked. Signup is disabled in the deployed app, and the setup command refuses to create another owner when an account already exists. Do not put `MONI_SETUP_PASSWORD` in Vercel. The optional setup variables in `.env.example` are for unattended trusted local setup only.
 
 The `.env.local` file contains real secrets. It is excluded from Git and Vercel uploads. Do not share it. If Vercel does not allow a sensitive variable to be pulled, enter its original value into `.env.local` yourself, without changing the production value.
 
@@ -129,7 +133,7 @@ npm start            Run the built application locally
 npm run typecheck    Strict TypeScript checking
 npm run format       Format source, tests, scripts, and documentation with Prettier
 npm run format:check Verify formatting without changing files
-npm test             41 isolated database-backed tests; no Neon credentials needed
+npm test             63 isolated database-backed tests; no Neon credentials needed
 npm run db:generate  Generate migrations after schema changes
 npm run db:migrate   Apply committed migrations to the configured database
 npm run setup:user   Create the single owner interactively
@@ -222,7 +226,7 @@ Run `npm run assets` after editing the vector icon source generator. Startup ima
 
 ## Verification and physical iPhone checklist
 
-Completed: production build, TypeScript checking, and 41 automated tests covering migrated PostgreSQL behavior, categories, titles, legacy Shortcut retries, exact totals, authentication, and rate limits. A focused Chromium browser check covered creating/editing expenses and categories, formatted amounts, no input autofocus, filter layouts at 320/375/440px, the bottom navigation on short pages, and route scroll reset. The Apple touch icon artwork is centered to the pixel. Physical iPhone installation and Safari behavior still need a check on the device.
+Completed: production build, TypeScript checking, and 63 automated tests covering migrated PostgreSQL behavior, asset categories, gold history, expense categories, titles, legacy Shortcut retries, exact totals, authentication, and rate limits. A focused Chromium browser check covered creating/editing expenses and categories, formatted amounts, no input autofocus, filter layouts at 320/375/440px, the bottom navigation on short pages, and route scroll reset. The Apple touch icon artwork is centered to the pixel. Physical iPhone installation and Safari behavior still need a check on the device.
 
 Refresh is in the top bar beside Personal workspace. Add expense is a circular floating button above the mobile navigation. The monthly expense card includes last month's total and the percentage change. If an installed iPhone Home Screen icon still shows the old artwork, remove that shortcut and add Moni to the Home Screen again using Safari; expenses remain in Neon.
 

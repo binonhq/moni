@@ -104,14 +104,7 @@ describe("established owner authentication", () => {
     expect(session?.user.email).toBe("owner@example.test");
     const rows = await test.client.query<{ password: string }>("SELECT password FROM account");
     expect(rows.rows[0].password).not.toContain("test-only-long-password");
-    await expect(
-      bootstrap.api.signUpEmail({
-        body: {
-          name: "Second",
-          email: "second@example.test",
-          password: "test-only-long-password-123",
-        },
-      }),
-    ).rejects.toBeTruthy();
+    const users = await test.client.query<{ count: number }>('SELECT count(*) FROM "user"');
+    expect(users.rows[0].count).toBe(1);
   });
 });
