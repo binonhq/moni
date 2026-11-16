@@ -133,7 +133,7 @@ npm start            Run the built application locally
 npm run typecheck    Strict TypeScript checking
 npm run format       Format source, tests, scripts, and documentation with Prettier
 npm run format:check Verify formatting without changing files
-npm test             63 isolated database-backed tests; no Neon credentials needed
+npm test             64 isolated database-backed tests; no Neon credentials needed
 npm run db:generate  Generate migrations after schema changes
 npm run db:migrate   Apply committed migrations to the configured database
 npm run setup:user   Create the single owner interactively
@@ -158,7 +158,7 @@ Only ingestion accepts the Bearer token. All reads, manual edits, deletes, expor
 | `DELETE /api/categories/:id`            | Owner session + Origin | Remove a category; linked expenses become Uncategorized |
 | `DELETE /api/transactions/:id`          | Owner session + Origin | Delete one expense                                      |
 | `POST /api/dashboard/transactions`      | Owner session + Origin | Manual entry from the app                               |
-| `GET /api/stats?month=2026-10`          | Owner session          | Vietnam-local reports                                   |
+| `GET /api/stats?month=2026-10`          | Owner session          | Monthly or full-history Vietnam reports                 |
 | `GET /api/export`                       | Owner session          | Snapshot-consistent CSV                                 |
 | `GET /api/integration`                  | Owner session          | Token status and last use; never token material         |
 | `DELETE /api/integration`               | Owner session + Origin | Revoke current ingestion token                          |
@@ -226,7 +226,7 @@ Run `npm run assets` after editing the vector icon source generator. Startup ima
 
 ## Verification and physical iPhone checklist
 
-Completed: production build, TypeScript checking, and 63 automated tests covering migrated PostgreSQL behavior, asset categories, gold history, expense categories, titles, legacy Shortcut retries, exact totals, authentication, and rate limits. A focused Chromium browser check covered creating/editing expenses and categories, formatted amounts, no input autofocus, filter layouts at 320/375/440px, the bottom navigation on short pages, and route scroll reset. The Apple touch icon artwork is centered to the pixel. Physical iPhone installation and Safari behavior still need a check on the device.
+Completed: production build, TypeScript checking, and 64 automated tests covering migrated PostgreSQL behavior, asset categories, gold history, expense categories, titles, legacy Shortcut retries, exact totals, authentication, and rate limits. A focused Chromium browser check covered creating/editing expenses and categories, formatted amounts, no input autofocus, filter layouts at 320/375/440px, the bottom navigation on short pages, and route scroll reset. The Apple touch icon artwork is centered to the pixel. Physical iPhone installation and Safari behavior still need a check on the device.
 
 Refresh is in the top bar beside Personal workspace. Add expense is a circular floating button above the mobile navigation. The monthly expense card includes last month's total and the percentage change. If an installed iPhone Home Screen icon still shows the old artwork, remove that shortcut and add Moni to the Home Screen again using Safari; expenses remain in Neon.
 

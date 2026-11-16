@@ -1,13 +1,15 @@
 import { authorize } from "@/server/api";
 import { endpoint, json } from "@/server/errors";
-import { monthSchema } from "@/lib/validation";
+import { statsPeriodSchema } from "@/lib/validation";
 import { localMonth } from "@/lib/dates";
 import { getStats } from "@/server/stats";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   return endpoint(async () => {
     const { db, userId } = await authorize(request);
-    const month = monthSchema.parse(new URL(request.url).searchParams.get("month") ?? localMonth());
+    const month = statsPeriodSchema.parse(
+      new URL(request.url).searchParams.get("month") ?? localMonth(),
+    );
     return json({ data: await getStats(db, month, new Date(), userId) });
   });
 }

@@ -58,6 +58,7 @@ export const querySchema = z
     "Minimum exceeds maximum.",
   );
 export const monthSchema = z.string().regex(/^(?:19\d{2}|[2-9]\d{3})-(?:0[1-9]|1[0-2])$/);
+export const statsPeriodSchema = z.union([monthSchema, z.literal("all")]);
 const safeVnd = z
   .union([z.string(), z.number()])
   .pipe(z.coerce.number<string | number>().int().nonnegative().max(Number.MAX_SAFE_INTEGER));

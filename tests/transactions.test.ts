@@ -193,6 +193,18 @@ describe("Vietnam reports and exact arithmetic", () => {
     expect(s.previousMonth).toBe("7");
     expect(s.highestDay?.date).toBe("2026-10-31");
   });
+  it("aggregates the full expense history without empty daily points", async () => {
+    await createTransaction(test.db, { amount: 70, timestamp: "2026-09-15T12:00:00+07:00" });
+    await createTransaction(test.db, { amount: 130, timestamp: "2026-11-02T12:00:00+07:00" });
+    const s = await getStats(test.db, "all", new Date("2026-11-02T23:00:00+07:00"));
+    expect(s.total).toBe("200");
+    expect(s.count).toBe(2);
+    expect(s.daily.map(day => day.date)).toEqual(["2026-09-15", "2026-11-02"]);
+    expect(s.monthly.map(item => item.month)).toEqual(["2026-09", "2026-11"]);
+    expect(s.elapsedDays).toBe(49);
+    expect(s.averageDaily).toBe("4");
+    expect(s.largestTransaction?.amount).toBe("130");
+  });
   it("keeps totals exact beyond JavaScript's safe integer range", async () => {
     await createTransaction(test.db, { ...payload, amount: Number.MAX_SAFE_INTEGER });
     await createTransaction(test.db, { ...payload, amount: Number.MAX_SAFE_INTEGER });

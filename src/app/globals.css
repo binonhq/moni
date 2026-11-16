@@ -1257,11 +1257,23 @@ th:last-child {
   border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
   box-shadow: var(--shadow-hover);
 }
-.month-selector > span {
+.month-selector > select {
+  appearance: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
   font-size: 12px;
-  min-width: 105px;
+  min-width: 118px;
+  padding: 0 8px;
   text-align: center;
+  text-align-last: center;
   font-weight: 600;
+  cursor: pointer;
+}
+.month-selector > select:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+  border-radius: 6px;
 }
 .insight-metrics {
   display: grid;
