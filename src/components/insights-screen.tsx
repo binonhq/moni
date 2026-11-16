@@ -1,13 +1,7 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  CalendarDays,
-  TrendingUp,
-  ArrowUpRight,
-  Hash,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, TrendingUp, ArrowUpRight } from "lucide-react";
 import { useResource } from "@/hooks/use-resource";
 import { displayDate, localMonth, monthLabel, shiftMonth } from "@/lib/dates";
 import { cn, money, percentChange } from "@/lib/utils";
@@ -15,6 +9,12 @@ import type { Stats } from "@/lib/types";
 import { PageHeading, ErrorNotice, Metric, Skeleton } from "./common";
 import { Button } from "./ui/button";
 import { ChartCard } from "./chart-card";
+
+const CategoryPieChart = dynamic(() => import("./category-pie-chart"), {
+  ssr: false,
+  loading: () => <div className="skeleton category-pie-loading" />,
+});
+
 export function InsightsScreen() {
   const [month, setMonth] = useState(localMonth());
   const [selectedDay, setSelectedDay] = useState<Stats["daily"][number] | null>(null);
@@ -82,25 +82,12 @@ export function InsightsScreen() {
               icon={<ArrowUpRight size={17} />}
             />
             <Metric
-              label="Average expense"
-              value={money(s.averageTransaction)}
-              note="Per transaction · rounded down"
-              icon={<Hash size={17} />}
+              label="Average daily expense"
+              value={money(s.averageDaily)}
+              note="Per calendar day · rounded down"
+              icon={<CalendarDays size={17} />}
             />
           </div>
-          <ChartCard
-            title="The longer view"
-            subtitle="Monthly expenses · the last twelve months"
-            kind="bar"
-            points={s.monthly.map(m => ({
-              label: displayDate(`${m.month}-01T00:00:00+07:00`, {
-                day: undefined,
-                month: "short",
-                year: "2-digit",
-              }),
-              amount: m.amount,
-            }))}
-          />
           <div className="insights-columns">
             <section className="panel heatmap-panel">
               <div className="panel-heading">
@@ -191,12 +178,39 @@ export function InsightsScreen() {
               </div>
             </section>
           </div>
+          <section className="panel category-pie-panel">
+            <div className="panel-heading">
+              <div>
+                <h2>Spending by category</h2>
+                <p>{monthLabel(month)} · where your money goes</p>
+              </div>
+              <span className="small muted">{s.byCategory.length} groups</span>
+            </div>
+            {s.byCategory.length ? (
+              <CategoryPieChart groups={s.byCategory} total={s.total} />
+            ) : (
+              <p className="category-pie-empty muted">No category expenses this month yet.</p>
+            )}
+          </section>
           <ChartCard
             title="Day by day"
             subtitle={`Exact daily expenses for ${monthLabel(month)}`}
             points={s.daily.map(d => ({
               label: displayDate(d.date + "T00:00:00+07:00"),
               amount: d.amount,
+            }))}
+          />
+          <ChartCard
+            title="The longer view"
+            subtitle="Monthly expenses · the last twelve months"
+            kind="bar"
+            points={s.monthly.map(m => ({
+              label: displayDate(`${m.month}-01T00:00:00+07:00`, {
+                day: undefined,
+                month: "short",
+                year: "2-digit",
+              }),
+              amount: m.amount,
             }))}
           />
           <div className="lifetime-strip">
