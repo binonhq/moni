@@ -88,6 +88,20 @@ export function InsightsScreen() {
               icon={<CalendarDays size={17} />}
             />
           </div>
+          <section className="panel category-pie-panel">
+            <div className="panel-heading">
+              <div>
+                <h2>Spending by category</h2>
+                <p>{monthLabel(month)} · where your money goes</p>
+              </div>
+              <span className="small muted">{s.byCategory.length} groups</span>
+            </div>
+            {s.byCategory.length ? (
+              <CategoryPieChart groups={s.byCategory} total={s.total} />
+            ) : (
+              <p className="category-pie-empty muted">No category expenses this month yet.</p>
+            )}
+          </section>
           <div className="insights-columns">
             <section className="panel heatmap-panel">
               <div className="panel-heading">
@@ -178,20 +192,6 @@ export function InsightsScreen() {
               </div>
             </section>
           </div>
-          <section className="panel category-pie-panel">
-            <div className="panel-heading">
-              <div>
-                <h2>Spending by category</h2>
-                <p>{monthLabel(month)} · where your money goes</p>
-              </div>
-              <span className="small muted">{s.byCategory.length} groups</span>
-            </div>
-            {s.byCategory.length ? (
-              <CategoryPieChart groups={s.byCategory} total={s.total} />
-            ) : (
-              <p className="category-pie-empty muted">No category expenses this month yet.</p>
-            )}
-          </section>
           <ChartCard
             title="Day by day"
             subtitle={`Exact daily expenses for ${monthLabel(month)}`}

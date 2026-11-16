@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useReducedMotion } from "motion/react";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import type { CategoryTotal } from "@/lib/types";
 import { money } from "@/lib/utils";
 
@@ -49,9 +49,10 @@ export default function CategoryPieChart({
               cy="50%"
               innerRadius="58%"
               outerRadius="88%"
-              paddingAngle={data.length > 1 ? 2 : 0}
+              cornerRadius={8}
+              paddingAngle={data.length > 1 ? 3 : 0}
               stroke="var(--surface)"
-              strokeWidth={3}
+              strokeWidth={2}
               isAnimationActive={!reducedMotion}
               animationDuration={850}
               animationEasing="ease-out"
@@ -60,17 +61,6 @@ export default function CategoryPieChart({
                 <Cell key={item.category?.id ?? "uncategorized"} fill={item.color} />
               ))}
             </Pie>
-            <Tooltip
-              content={({ active, payload }) =>
-                active && payload?.length ? (
-                  <div className="chart-tooltip">
-                    <span>{String(payload[0].payload.label)}</span>
-                    <strong>{money(String(payload[0].payload.amount))}</strong>
-                    <small>{payload[0].payload.share}% of the month</small>
-                  </div>
-                ) : null
-              }
-            />
           </PieChart>
         </ResponsiveContainer>
         <div className="category-pie-center" aria-hidden="true">
