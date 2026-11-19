@@ -10,23 +10,6 @@ export const metadata: Metadata = {
     capable: true,
     title: "Moni",
     statusBarStyle: "black-translucent",
-    startupImage: [
-      {
-        url: "/icons/startup-1179x2556.png",
-        media:
-          "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
-      },
-      {
-        url: "/icons/startup-1290x2796.png",
-        media:
-          "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
-      },
-      {
-        url: "/icons/startup-1320x2868.png",
-        media:
-          "(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
-      },
-    ],
   },
   icons: {
     icon: [

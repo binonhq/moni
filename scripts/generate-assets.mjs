@@ -25,14 +25,4 @@ const maskable = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="51
 await sharp(Buffer.from(maskable))
   .png()
   .toFile(fileURLToPath(new URL("maskable-512.png", dir)));
-for (const [w, h] of [
-  [1179, 2556],
-  [1290, 2796],
-  [1320, 2868],
-]) {
-  const splash = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs><linearGradient id="splash-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3e8"/><stop offset=".5" stop-color="#fffaf3"/><stop offset="1" stop-color="#fffed8"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#splash-gradient)"/><svg x="${(w - 210) / 2}" y="${(h - 210) / 2}" width="210" height="210" viewBox="0 0 512 512">${iconGradient}<rect width="512" height="512" rx="130" fill="url(#icon-gradient)"/>${mark}</svg></svg>`;
-  await sharp(Buffer.from(splash))
-    .png()
-    .toFile(fileURLToPath(new URL(`startup-${w}x${h}.png`, dir)));
-}
-console.log("Generated app icons, maskable icon, and three iPhone startup images.");
+console.log("Generated app icons and maskable icon.");

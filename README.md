@@ -218,11 +218,11 @@ Errors use `{ "error": { "code": "…", "message": "…" } }`, with `400`, `401`
 
 ## PWA behavior
 
-Native manifest, 192/512 icons, maskable icon, 180 Apple touch icon, and selected iPhone startup images are in `public/`. Safe areas, dynamic viewport heights, mobile navigation, system theme, and reduced-motion preferences are handled explicitly.
+Native manifest, 192/512 icons, maskable icon, and 180 Apple touch icon are in `public/`. Safe areas, dynamic viewport heights, mobile navigation, system theme, and reduced-motion preferences are handled explicitly.
 
 The service worker runs in production over HTTPS (localhost is allowed for QA). It caches the public offline shell and immutable static assets. Authenticated HTML, RSC payloads, and API responses are never stored in shared Cache Storage. Offline totals already held in memory are visibly marked as potentially stale; server mutations are disabled. Reconnecting refreshes data. Updates wait for user acceptance or for old windows to close. Bump the service worker's shell version when changing cached shell files.
 
-Run `npm run assets` after editing the vector icon source generator. Startup imagery is provided for selected 393, 430, and 440 CSS-pixel iPhones; other devices use the OS launch experience. No unsupported splash-screen API is used.
+Run `npm run assets` after editing the vector icon source generator.
 
 ## Verification and physical iPhone checklist
 
