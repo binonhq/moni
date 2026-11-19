@@ -202,13 +202,16 @@ export function GoldHistoryCard({ prices }: { prices: GoldPrice[] }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {points.map((point, index) => (
-                      <tr key={`${point.date}-${index}`}>
-                        <td>{goldHistoryLabel(point.date, "day")}</td>
-                        <td>{money(point.buy)}</td>
-                        <td>{point.sell ? money(point.sell) : "—"}</td>
-                      </tr>
-                    ))}
+                    {points
+                      .slice()
+                      .reverse()
+                      .map((point, index) => (
+                        <tr key={`${point.date}-${index}`}>
+                          <td>{goldHistoryLabel(point.date, "day")}</td>
+                          <td>{money(point.buy)}</td>
+                          <td>{point.sell ? money(point.sell) : "—"}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>

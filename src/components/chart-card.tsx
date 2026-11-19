@@ -39,12 +39,15 @@ export function ChartCard({
               </tr>
             </thead>
             <tbody>
-              {points.map(p => (
-                <tr key={p.label}>
-                  <td>{p.label}</td>
-                  <td>{money(p.amount)}</td>
-                </tr>
-              ))}
+              {points
+                .slice()
+                .reverse()
+                .map(p => (
+                  <tr key={p.label}>
+                    <td>{p.label}</td>
+                    <td>{money(p.amount)}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
